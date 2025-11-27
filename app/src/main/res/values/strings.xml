@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Sky</string>
+    <string name="Agree">Давай</string>
+    <string name="No">Нет, спасибо</string>
+    <string name="Next">Дальше</string>
+    <string name="Entry">Войти через Telegram</string>
+    <string name="NameUser">Ann</string>
+    <string name="faivoriteBook">Ваши избранные книги</string>
+    <string name="janer">Жанры</string>
+    <string name="Filter">Сортировать</string>
+    <string name="UserName">Марина Трухарова</string>
+    <string name="Redact">Изменить</string>
+    <string name="City">Нижний Тагил</string>
+</resources>

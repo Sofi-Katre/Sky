@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/_c9d5cad2322ebede7a18a5792640055"
+    tools:context=".MainActivity" >
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="332dp"
+        android:layout_height="180dp"
+        android:layout_marginTop="272dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.493"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/img1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="236dp"
+        android:background="@color/backBlure"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <Button
+            android:id="@+id/btnInstaction"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/btnOrange"
+            android:text="@string/Agree"
+            android:textColorLink="@color/btnOrange"
+            android:layout_marginEnd="10dp" /> <!-- Отступ справа от первой кнопки -->
+
+        <Button
+            android:id="@+id/btnRegistration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/btnViolet"
+            android:text="@string/No"
+            android:layout_marginStart="10dp" /> <!-- Отступ слева от второй кнопки -->
+
+    </LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

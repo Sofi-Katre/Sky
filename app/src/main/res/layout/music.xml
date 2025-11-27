@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/_9f6aa517a40efc77737cefcdbc7dba2"
+    tools:context=".Music">
+
+    <!-- ScrollView позволяет прокручивать контент -->
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:background="@color/backBlure"
+        app:layout_constraintBottom_toTopOf="@id/linearLayoutBottomNav"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Контейнер для всего прокручиваемого контента (фильтры, карточки) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/backBlure"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <!-- ... ВАШ КОД ФИЛЬТРОВ И ЗАГОЛОВКОВ (без изменений) ... -->
+            <TextView
+                android:id="@+id/txtJaner"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="35dp"
+                android:text="@string/janer"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingTop="10dp"
+                android:paddingEnd="10dp">
+
+                <ImageView
+                    android:id="@+id/btnJaner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/btnall" />
+
+                <ImageView
+                    android:id="@+id/imageView5"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/btncalmoff" />
+
+                <ImageView
+                    android:id="@+id/imageView6"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:padding="9dp"
+                    app:srcCompat="@drawable/btnmorningoff" />
+
+                <ImageView
+                    android:id="@+id/imageView7"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    app:srcCompat="@drawable/btnnaturaloff" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btnFilter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="15dp"
+                android:text="@string/Filter"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingStart="10dp"
+                android:paddingTop="10dp"
+                android:paddingEnd="10dp">
+
+                <ImageView
+                    android:id="@+id/imageView9"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    app:srcCompat="@drawable/filtertonew" />
+
+                <ImageView
+                    android:id="@+id/imageView10"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:srcCompat="@drawable/filtertoalfavitoff" />
+            </LinearLayout>
+
+
+            <!-- НОВЫЙ ШАБЛОН КАРТОЧКИ с MaterialCardView для скругления углов -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="4dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="10dp">
+
+                    <!-- 1. Контейнер для изображения слева -->
+                    <!-- Примечание: Для скругления углов ImageView может потребоваться библиотека (Glide/Coil) или DrawableShape -->
+                    <ImageView
+                        android:id="@+id/imageViewCover"
+                        android:layout_width="100dp"
+                        android:layout_height="100dp"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/_436563185830" />
+
+                    <!-- 2. Контейнер для текста справа (вертикальный) -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_vertical"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:paddingStart="10dp">
+
+                        <!-- Наименование -->
+                        <TextView
+                            android:id="@+id/textViewTitle"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="Наименование песни"
+                            android:textColor="@color/black"
+                            android:textSize="16sp"
+                            android:textStyle="bold" />
+
+                        <!-- Автор -->
+                        <TextView
+                            android:id="@+id/textViewAuthor"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="Автор: Иван Иванов"
+                            android:textColor="@color/black"
+                            android:textSize="14sp" />
+
+                        <!-- 3. Контейнер для Жанра и Даты (горизонтальный) -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:orientation="horizontal">
+
+                            <!-- Жанры -->
+                            <TextView
+                                android:id="@+id/textViewGenres"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:text="Жанр: Утро"
+                                android:textColor="@color/black"
+                                android:textSize="12sp" />
+
+                            <!-- Дата добавления -->
+                            <TextView
+                                android:id="@+id/textViewDate"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="end"
+                                android:text="20.10.2025"
+                                android:textColor="@color/black"
+                                android:textSize="12sp" />
+
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Примечание: Здесь будут автоматически генерироваться другие карточки из БД -->
+
+        </LinearLayout>
+    </ScrollView>
+
+
+    <!-- Нижнее меню навигации, закрепленное внизу экрана -->
+    <LinearLayout
+        android:id="@+id/linearLayoutBottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:background="@color/blue"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageView
+            android:id="@+id/btnSleep"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            app:srcCompat="@drawable/iconbooks2" />
+
+        <ImageView
+            android:id="@+id/btnMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            app:srcCompat="@drawable/iconmusic2" />
+
+        <ImageView
+            android:id="@+id/btnWhether"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            app:srcCompat="@drawable/off" />
+
+        <!-- Добавлен недостающий ImageView -->
+        <ImageView
+            android:id="@+id/btnProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/iconprofile" />
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

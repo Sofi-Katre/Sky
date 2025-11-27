@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/_63b5a7630022e5bf51821c91813966c"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context=".instraction3">
+
+
+    <ImageView
+        android:id="@+id/imageView3"
+        android:layout_width="216dp"
+        android:layout_height="163dp"
+        android:layout_marginBottom="112dp"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.4"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/txt3" />
+
+    <ImageView
+        android:id="@+id/imageView2"
+        android:layout_width="145dp"
+        android:layout_height="135dp"
+        android:layout_marginBottom="264dp"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.097"
+        app:layout_constraintStart_toStartOf="parent"
+        app:srcCompat="@drawable/img5" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="match_parent"
+        android:layout_height="90dp"
+        android:background="@color/blue"
+        android:gravity="center"
+        android:orientation="horizontal"
+        android:paddingHorizontal="20dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <ImageView
+            android:id="@+id/btnSleep"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            app:srcCompat="@drawable/iconbooks2" /> <!-- Отступ справа -->
+
+        <ImageView
+            android:id="@+id/btnMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            app:srcCompat="@drawable/iconmusic2" /> <!-- Отступ справа -->
+
+        <ImageView
+            android:id="@+id/btnWhether"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="25dp"
+            app:srcCompat="@drawable/iconwhether" /> <!-- Отступ справа -->
+
+        <ImageView
+            android:id="@+id/btnProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/iconprofile" /> <!-- Последнему элементу отступ справа не нужен -->
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/bntNext"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="128dp"
+        android:backgroundTint="@color/btnOrange"
+        android:text="@string/Next"
+        android:textColor="@color/black"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.854"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -38,6 +38,10 @@ android {
             }
         }
     }
+
+    packagingOptions {
+        resources.excludes.add("META-INF/DEPENDENCIES")
+    }
 }
 
 dependencies {
@@ -51,4 +55,8 @@ dependencies {
     implementation("androidx.cardview:cardview:1.0.0")
     implementation ("com.github.bumptech.glide:glide:4.15.1")
     annotationProcessor ("com.github.bumptech.glide:compiler:4.15.1")
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
+    implementation("com.google.api-client:google-api-client-android:1.32.1")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20230822-2.0.0")
+    implementation("com.google.oauth-client:google-oauth-client-jetty:1.32.1")
 }

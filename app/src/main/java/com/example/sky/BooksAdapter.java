@@ -1,21 +1,21 @@
 package com.example.sky;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import com.example.sky.Book;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide; // Импорт Glide
+import com.bumptech.glide.Glide;
 import java.util.List;
 
 public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHolder> {
 
     private Context context;
-    private List<Book> books; // Используем класс модели Book
+    private List<Book> books;
 
     public BooksAdapter(Context context, List<Book> books) {
         this.context = context;
@@ -35,9 +35,9 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
             textViewDate = itemView.findViewById(R.id.textViewDate);
         }
     }
+
     @Override
     public BookViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Используем context из конструктора
         View view = LayoutInflater.from(context).inflate(R.layout.item_book, parent, false);
         return new BookViewHolder(view);
     }
@@ -45,11 +45,18 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
     @Override
     public void onBindViewHolder(@NonNull BookViewHolder holder, int position) {
         Book book = books.get(position);
-        Glide.with(context) // Используем context для загрузки
-                .load(book.imageUrl) // Загружаем из URL, который получили из БД
-                .placeholder(R.drawable.zaglushka) // Изображение-заглушка пока грузится
-                .error(R.drawable.zaglushka) // Изображение в случае ошибки
-                .into(holder.imageViewCover); // Куда грузить
+        String rawImageUrl = book.imageUrl;
+
+        if (rawImageUrl != null && !rawImageUrl.isEmpty()) {
+            String directImageUrl = convertGoogleDriveUrlToDirect(rawImageUrl);
+            Glide.with(context)
+                    .load(directImageUrl)
+                    .placeholder(R.drawable.zaglushka)
+                    .error(R.drawable.zaglushka)
+                    .into(holder.imageViewCover);
+        } else {
+            holder.imageViewCover.setImageResource(R.drawable.zaglushka);
+        }
 
         holder.textViewTitle.setText(book.title);
         holder.textViewAuthor.setText("Автор: " + book.author);
@@ -60,5 +67,24 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
     @Override
     public int getItemCount() {
         return books.size();
+    }
+
+    // *** ВСПОМОГАТЕЛЬНЫЙ МЕТОД ДЛЯ ПРЕОБРАЗОВАНИЯ URL ***
+    private String convertGoogleDriveUrlToDirect(String fullUrl) {
+        try {
+            int startIndex = fullUrl.indexOf("/d/") + 3;
+            int endIndex = fullUrl.indexOf("/view?");
+
+            if (startIndex == -1 || endIndex == -1 || endIndex <= startIndex) {
+                return "https://drive.google.com/uc?export=download&id=" + fullUrl;
+            }
+
+            String fileId = fullUrl.substring(startIndex, endIndex);
+            return "https://drive.google.com/uc?export=download&id=" + fileId;
+
+        } catch (Exception e) {
+            Log.e("BooksAdapter", "Failed to parse Google Drive URL: " + fullUrl, e);
+            return fullUrl;
+        }
     }
 }

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="4dp"
+    android:background="@color/white">
+
+    <!-- Используем стандартное пространство имен android: -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@android:color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="16dp">
+
+        <!-- Кнопка Play для главы -->
+        <ImageView
+            android:id="@+id/btnPlayChapter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/icon_play_circle" />
+
+        <!-- Название главы -->
+        <TextView
+            android:id="@+id/textViewChapterTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:text="Глава 1"
+            android:textColor="@android:color/black"
+            android:textSize="16sp" />
+
+        <!-- Длительность главы -->
+        <TextView
+            android:id="@+id/textViewChapterDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="32 мин"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp" />
+    </LinearLayout>
+
+</androidx.cardview.widget.CardView>

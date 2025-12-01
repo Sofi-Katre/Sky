@@ -15,7 +15,7 @@ import android.database.sqlite.SQLiteDatabase;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Books extends AppCompatActivity {
+public class Books extends AppCompatActivity implements BooksAdapter.OnBookClickListener {
 
     private static final String TAG = "BooksActivity";
     private RecyclerView recyclerView;
@@ -31,7 +31,6 @@ public class Books extends AppCompatActivity {
 
         initializeUIAndLoadBooks();
 
-        // Обработчики навигации остаются на месте
         setupNavigationButtons();
     }
 
@@ -56,12 +55,10 @@ public class Books extends AppCompatActivity {
 
     private void initializeUIAndLoadBooks() {
         try {
-            // *** 1. Убеждаемся, что БД открыта ***
             if (dbHelper.getDatabase() == null || !dbHelper.getDatabase().isOpen()) {
                 dbHelper.openDatabase();
             }
 
-            // *** 2. Инициализируем RecyclerView ***
             recyclerView = findViewById(R.id.recyclerViewBooks);
             if (recyclerView == null) {
                 Log.e(TAG, "recyclerViewBooks not found in the layout!");
@@ -69,21 +66,35 @@ public class Books extends AppCompatActivity {
             }
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-            // *** 3. Загружаем данные и подключаем адаптер ***
             List<Book> books = getAllBooksFromDB();
-            adapter = new BooksAdapter(this, books);
+
+            // !!! ОБНОВЛЯЕМ ИНИЦИАЛИЗАЦИЮ АДАПТЕРА !!!
+            // Теперь передаем 'this' (текущую активность) в качестве слушателя кликов
+            adapter = new BooksAdapter(this, books, this);
+
             recyclerView.setAdapter(adapter);
 
         } catch (SQLException e) {
-            // Эта ошибка сработает, если MainActivity не смогла скачать файл по какой-то причине
             Log.e(TAG, "Error opening database or loading books", e);
             Toast.makeText(this, "Не удалось открыть базу данных. Убедитесь, что она была загружена.", Toast.LENGTH_LONG).show();
         }
     }
 
-    // --- Удален класс DownloadDatabaseTask ---
+    // !!! РЕАЛИЗАЦИЯ МЕТОДА ОБРАБОТКИ КЛИКА !!!
+    // Этот метод вызывается из BooksAdapter, когда пользователь нажимает на карточку
+    @Override
+    public void onBookClick(Book book) {
+        // Создаем Intent для перехода на BookPage
+        Intent intent = new Intent(this, BookPage.class);
 
-    // Рекомендуется закрывать базу данных при уничтожении активности
+        // Передаем объект Book целиком в новую активность
+        // Используем ключ "SELECTED_BOOK"
+        intent.putExtra("SELECTED_BOOK", book);
+
+        // Запускаем активность
+        startActivity(intent);
+    }
+
     @Override
     protected void onDestroy() {
         super.onDestroy();

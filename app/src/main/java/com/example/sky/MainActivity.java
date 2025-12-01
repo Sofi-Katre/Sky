@@ -23,7 +23,7 @@ import java.net.URL;
 public class MainActivity extends AppCompatActivity {
 
     // Используем предоставленный вами File ID для формирования прямой ссылки
-    private static final String FILE_ID = "1TKyECifFSflpaEyHY044oiQjQi9_zb9P";
+    private static final String FILE_ID = "1cJtH7GVP6keEhdG5JWWQiGhc3IZsFDnt";
     private static final String TAG = "MainActivity";
     private static final String DB_NAME = "MyDB.db";
 

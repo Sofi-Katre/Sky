@@ -14,77 +14,98 @@ import java.util.List;
 
 public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHolder> {
 
-    private Context context;
-    private List<Book> books;
+    // --- 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС И ПЕРЕМЕННУЮ СЛУШАТЕЛЯ ---
+    public interface OnBookClickListener {
+        void onBookClick(Book book);
+    }
+    private final OnBookClickListener listener;
 
-    public BooksAdapter(Context context, List<Book> books) {
+    private final Context context;
+    private final List<Book> bookList;
+
+    // --- 2. ОБНОВЛЯЕМ КОНСТРУКТОР ДЛЯ ПРИНЯТИЯ СЛУШАТЕЛЯ ---
+    public BooksAdapter(Context context, List<Book> bookList, OnBookClickListener listener) {
         this.context = context;
-        this.books = books;
+        this.bookList = bookList;
+        this.listener = listener; // Инициализируем слушателя
     }
 
-    public static class BookViewHolder extends RecyclerView.ViewHolder {
-        ImageView imageViewCover;
-        TextView textViewTitle, textViewAuthor, textViewGenres, textViewDate;
-
-        public BookViewHolder(View itemView) {
-            super(itemView);
-            imageViewCover = itemView.findViewById(R.id.imageViewCover);
-            textViewTitle = itemView.findViewById(R.id.textViewTitle);
-            textViewAuthor = itemView.findViewById(R.id.textViewAuthor);
-            textViewGenres = itemView.findViewById(R.id.textViewGenres);
-            textViewDate = itemView.findViewById(R.id.textViewDate);
-        }
-    }
-
+    @NonNull
     @Override
     public BookViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        // Убедитесь, что R.layout.item_book существует и содержит ваши элементы карточки
         View view = LayoutInflater.from(context).inflate(R.layout.item_book, parent, false);
         return new BookViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull BookViewHolder holder, int position) {
-        Book book = books.get(position);
-        String rawImageUrl = book.imageUrl;
+        Book currentBook = bookList.get(position);
 
-        if (rawImageUrl != null && !rawImageUrl.isEmpty()) {
-            String directImageUrl = convertGoogleDriveUrlToDirect(rawImageUrl);
-            Glide.with(context)
-                    .load(directImageUrl)
-                    .placeholder(R.drawable.zaglushka)
-                    .error(R.drawable.zaglushka)
-                    .into(holder.imageViewCover);
-        } else {
-            holder.imageViewCover.setImageResource(R.drawable.zaglushka);
-        }
+        holder.titleTextView.setText(currentBook.title);
+        holder.authorTextView.setText("Автор: " + currentBook.author);
+        holder.genresTextView.setText("Жанр: " + currentBook.genre);
+        holder.dateTextView.setText(currentBook.date);
+        holder.iconImageView.setVisibility(View.VISIBLE);
 
-        holder.textViewTitle.setText(book.title);
-        holder.textViewAuthor.setText("Автор: " + book.author);
-        holder.textViewGenres.setText("Жанр: " + book.genre);
-        holder.textViewDate.setText(book.date);
+        String directImageUrl = convertGoogleDriveUrlToDirect(currentBook.imageUrl);
+        Glide.with(context)
+                .load(directImageUrl)
+                .placeholder(R.drawable.zaglushka)
+                .error(R.drawable.zaglushka)
+                .into(holder.coverImageView);
+
+        // --- 3. ОСТАВЛЯЕМ ТОЛЬКО ОДИН ОБРАБОТЧИК КЛИКА ЧЕРЕЗ ИНТЕРФЕЙС ---
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onBookClick(currentBook); // Вызываем метод в Books.java
+            }
+        });
+        // -------------------------------------------------------------
     }
 
     @Override
     public int getItemCount() {
-        return books.size();
+        return bookList.size();
     }
 
-    // *** ВСПОМОГАТЕЛЬНЫЙ МЕТОД ДЛЯ ПРЕОБРАЗОВАНИЯ URL ***
+    // Вспомогательный метод для преобразования URL Google Drive (остается без изменений)
     private String convertGoogleDriveUrlToDirect(String fullUrl) {
+        // ... (ваш код метода convertGoogleDriveUrlToDirect) ...
+        if (fullUrl == null || fullUrl.isEmpty()) return "";
         try {
             int startIndex = fullUrl.indexOf("/d/") + 3;
             int endIndex = fullUrl.indexOf("/view?");
-
+            String fileId;
             if (startIndex == -1 || endIndex == -1 || endIndex <= startIndex) {
-                return "https://drive.google.com/uc?export=download&id=" + fullUrl;
+                fileId = fullUrl.substring(fullUrl.lastIndexOf("/") + 1);
+            } else {
+                fileId = fullUrl.substring(startIndex, endIndex);
             }
-
-            String fileId = fullUrl.substring(startIndex, endIndex);
             return "https://drive.google.com/uc?export=download&id=" + fileId;
-
         } catch (Exception e) {
-            Log.e("BooksAdapter", "Failed to parse Google Drive URL: " + fullUrl, e);
+            Log.e("BooksAdapter", "Failed to parse URL: " + fullUrl, e);
             return fullUrl;
+        }
+    }
+
+    // ViewHolder (остается без изменений)
+    public static class BookViewHolder extends RecyclerView.ViewHolder {
+        public ImageView coverImageView;
+        public TextView titleTextView;
+        public ImageView iconImageView;
+        public TextView authorTextView;
+        public TextView genresTextView;
+        public TextView dateTextView;
+
+        public BookViewHolder(@NonNull View itemView) {
+            super(itemView);
+            coverImageView = itemView.findViewById(R.id.imageViewCover);
+            titleTextView = itemView.findViewById(R.id.textViewTitle);
+            iconImageView = itemView.findViewById(R.id.imageViewIcon);
+            authorTextView = itemView.findViewById(R.id.textViewAuthor);
+            genresTextView = itemView.findViewById(R.id.textViewGenres);
+            dateTextView = itemView.findViewById(R.id.textViewDate);
         }
     }
 }

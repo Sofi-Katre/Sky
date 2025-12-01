@@ -37,6 +37,7 @@
         <activity android:name=".Books" android:exported="true" />
         <activity android:name=".Music" android:exported="true" />
         <activity android:name=".Profile" android:exported="true" />
+        <activity android:name=".BookPage" android:exported="true" />
 
     </application>
 </manifest>

@@ -6,14 +6,15 @@ public class Chapter implements Serializable {
     private String title;
     private String duration;
     private String audioUrl;
+    private String state; // Добавляем поле для состояния кнопки
 
     public Chapter(String title, String duration, String audioUrl) {
         this.title = title;
         this.duration = duration;
         this.audioUrl = audioUrl;
+        this.state = "stop"; // По умолчанию состояние - stop
     }
 
-    // Пустой конструктор нужен, если вы используете десериализацию/ORM/JSON
     public Chapter() {}
 
     public String getTitle() {
@@ -28,7 +29,10 @@ public class Chapter implements Serializable {
         return audioUrl;
     }
 
-    // Опционально: сеттеры, если данные меняются
+    public String getState() {
+        return state;
+    }
+
     public void setTitle(String title) {
         this.title = title;
     }
@@ -40,4 +44,9 @@ public class Chapter implements Serializable {
     public void setAudioUrl(String audioUrl) {
         this.audioUrl = audioUrl;
     }
+
+    public void setState(String state) {
+        this.state = state;
+    }
 }
+

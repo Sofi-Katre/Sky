@@ -3,8 +3,11 @@ package com.example.sky;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -13,7 +16,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.bumptech.glide.Glide;
 import android.widget.Button;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
@@ -39,8 +44,35 @@ public class BookPage extends AppCompatActivity implements ChapterAdapter.OnChap
     private ImageView coverImageView;
     private Button btnBack;
 
-    // Текущий воспроизводимый URL (direct)
+    // UI для плеера
+    private TextView txtCurrentTime;
+    private TextView txtTotalTime;
+    private SeekBar seekBarProgress;
+    private ImageView btnPlayPause;
+    private ImageView btnRewind10;
+    private ImageView btnForward15;
+
+    // Кэш длительностей аудиофайлов
+    private Map<String, Long> durationCache = new HashMap<>();
+
+    // Текущий воспроизводимый URL
     private String currentPlayingUrl = null;
+
+    // Переменные для отслеживания состояния плеера
+    private boolean isPlaying = false;
+
+    // Состояние кнопок для глав
+    private String currentChapterState = "stop"; // "stop", "play", "pause"
+
+    // Обработчик для обновления UI каждую секунду
+    private Handler handler = new Handler(Looper.getMainLooper());
+    private final Runnable updateUIRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updatePlayerUI();
+            handler.postDelayed(this, 1000); // обновляем каждую секунду
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +80,19 @@ public class BookPage extends AppCompatActivity implements ChapterAdapter.OnChap
         setContentView(R.layout.book_page);
 
         dbHelper = new DatabaseHelper(this);
+
+        // Инициализация UI
+        txtCurrentTime = findViewById(R.id.txtCurrentTime);
+        txtTotalTime = findViewById(R.id.txtTotalTime);
+        seekBarProgress = findViewById(R.id.seekBarProgress);
+        btnPlayPause = findViewById(R.id.btnPlayPause);
+        btnRewind10 = findViewById(R.id.btnRewind10);
+        btnForward15 = findViewById(R.id.btnForward15);
+
+        // Кнопки управления
+        btnPlayPause.setOnClickListener(v -> togglePlayPause());
+        btnRewind10.setOnClickListener(v -> seekBackward10Sec());
+        btnForward15.setOnClickListener(v -> seekForward15Sec());
 
         currentBook = (Book) getIntent().getSerializableExtra("SELECTED_BOOK");
 
@@ -60,21 +105,31 @@ public class BookPage extends AppCompatActivity implements ChapterAdapter.OnChap
         }
     }
 
-    // Инициализируем плеер в onStart
+    private void setupChapterListWithDbData(int bookId) {
+        recyclerViewChapters = findViewById(R.id.recyclerViewChapters); // Найдем RecyclerView по ID
+        recyclerViewChapters.setLayoutManager(new LinearLayoutManager(this)); // Настроим менеджер компоновки (LinearLayoutManager)
+
+        // Получим список глав из базы данных
+        chapterList = getChaptersForBookFromDB(bookId);
+
+        // Создаем адаптер и назначаем его для RecyclerView
+        chapterAdapter = new ChapterAdapter(this, chapterList, this); // передаем слушатель (this) для обработки кликов
+        recyclerViewChapters.setAdapter(chapterAdapter); // Устанавливаем адаптер в RecyclerView
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
         initExoPlayerIfNeeded();
     }
 
-    // Освобождаем ресурсы в onStop
     @Override
     protected void onStop() {
         super.onStop();
         releasePlayer();
-        // Сброс UI списка
         currentPlayingUrl = null;
         if (chapterAdapter != null) chapterAdapter.clearPlaying();
+        stopUpdatingUI(); // Останавливаем обновление UI
     }
 
     @Override
@@ -85,7 +140,6 @@ public class BookPage extends AppCompatActivity implements ChapterAdapter.OnChap
         }
     }
 
-    // Инициализация ExoPlayer в одном месте
     private void initExoPlayerIfNeeded() {
         if (exoPlayer == null) {
             exoPlayer = new ExoPlayer.Builder(this).build();
@@ -106,68 +160,6 @@ public class BookPage extends AppCompatActivity implements ChapterAdapter.OnChap
                 Log.w("BookPage", "Ошибка при освобождении плеера: " + e.getMessage(), e);
             }
             exoPlayer = null;
-        }
-    }
-
-    // Обработчик клика из адаптера — теперь реализован toggle логикой
-    @Override
-    public void onChapterClick(String audioUrl) {
-        if (audioUrl == null || audioUrl.isEmpty()) return;
-
-        // audioUrl здесь ожидается как directUrl, т.к. мы формируем его при чтении из БД
-        String directUrl = audioUrl;
-
-        initExoPlayerIfNeeded();
-
-        // Если кликнули по той же главе — переключаем play/pause
-        if (directUrl.equals(currentPlayingUrl)) {
-            if (exoPlayer != null && exoPlayer.isPlaying()) {
-                exoPlayer.pause();
-                // показываем, что сейчас пауза — вернуть иконку Play
-                if (chapterAdapter != null) chapterAdapter.clearPlaying();
-            } else {
-                if (exoPlayer != null) {
-                    exoPlayer.play();
-                    if (chapterAdapter != null) chapterAdapter.setPlayingUrl(directUrl);
-                }
-            }
-            return;
-        }
-
-        // Если кликаем по другой главе — запускаем новую
-        playNewAudio(directUrl);
-    }
-
-    // Запуск новой главы (стоп предыдущей + запуск новой)
-    private void playNewAudio(String directUrl) {
-        if (directUrl == null || directUrl.isEmpty()) {
-            Toast.makeText(this, "Ссылка на аудиофайл отсутствует.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        initExoPlayerIfNeeded();
-
-        try {
-            // Остановим предыдущую с сохранением позиции (если нужно) — используем stop чтобы начать заново
-            if (exoPlayer != null) {
-                exoPlayer.stop();
-            }
-
-            MediaItem mediaItem = MediaItem.fromUri(directUrl);
-            exoPlayer.setMediaItem(mediaItem);
-            exoPlayer.prepare();
-            exoPlayer.play();
-
-            // Обновляем UI списка
-            currentPlayingUrl = directUrl;
-            if (chapterAdapter != null) chapterAdapter.setPlayingUrl(directUrl);
-
-            Toast.makeText(this, "Запускаю воспроизведение...", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Log.e("BookPage", "Ошибка при подготовке/воспроизведении: " + e.getMessage(), e);
-            Toast.makeText(this, "Не удалось воспроизвести файл.", Toast.LENGTH_SHORT).show();
-            currentPlayingUrl = null;
-            if (chapterAdapter != null) chapterAdapter.clearPlaying();
         }
     }
 
@@ -204,97 +196,104 @@ public class BookPage extends AppCompatActivity implements ChapterAdapter.OnChap
 
     @Override
     public void onPlaybackStateChanged(int playbackState) {
-        if (playbackState == Player.STATE_BUFFERING) {
-            // можно показать индикатор загрузки
-        } else if (playbackState == Player.STATE_READY) {
-            // готово к воспроизведению
-        } else if (playbackState == Player.STATE_ENDED) {
-            // воспроизведение завершено — сбрасываем индикатор
+        if (playbackState == Player.STATE_READY) {
+            long durationMs = exoPlayer.getDuration();
+            String duration = formatDuration(durationMs);
+            txtTotalTime.setText(duration); // Обновление общего времени
+            seekBarProgress.setMax((int) durationMs); // Установка максимума SeekBar
+            startUpdatingUI(); // Запускаем обновление времени
+        }
+
+        if (playbackState == Player.STATE_ENDED) {
+            currentPlayingUrl = null;
+            if (chapterAdapter != null) chapterAdapter.clearPlaying();
+            isPlaying = false;
+            updateChapterState("stop"); // Обновляем состояние кнопки на главе
+            btnPlayPause.setImageResource(R.drawable.icon_play_circle); // Кнопка Play
+            stopUpdatingUI(); // Останавливаем обновление времени
+        }
+    }
+
+    private void togglePlayPause() {
+        if (exoPlayer != null) {
+            if (exoPlayer.isPlaying()) {
+                exoPlayer.pause();
+                updateChapterState("pause"); // Обновляем состояние кнопки на главе
+                btnPlayPause.setImageResource(R.drawable.icon_play_circle); // Кнопка Play
+                isPlaying = false;
+            } else {
+                exoPlayer.play();
+                updateChapterState("play"); // Обновляем состояние кнопки на главе
+                btnPlayPause.setImageResource(R.drawable.icon_pause); // Кнопка Pause
+                isPlaying = true;
+            }
+        }
+    }
+
+    @Override
+    public void onChapterClick(String audioUrl) {
+        if (audioUrl == null || audioUrl.isEmpty()) return;
+
+        String directUrl = audioUrl;
+
+        initExoPlayerIfNeeded();
+
+        if (directUrl.equals(currentPlayingUrl)) {
+            if (exoPlayer != null && exoPlayer.isPlaying()) {
+                exoPlayer.pause();
+                updateChapterState("pause"); // Обновляем состояние кнопки на главе
+                stopUpdatingUI(); // Останавливаем обновление времени
+                btnPlayPause.setImageResource(R.drawable.icon_play_circle); // Кнопка Play
+            } else {
+                exoPlayer.play();
+                updateChapterState("play"); // Обновляем состояние кнопки на главе
+                startUpdatingUI(); // Начинаем обновление времени
+                btnPlayPause.setImageResource(R.drawable.icon_pause); // Кнопка Pause
+            }
+            return;
+        }
+
+        playNewAudio(directUrl);
+    }
+
+    private void playNewAudio(String directUrl) {
+        if (directUrl == null || directUrl.isEmpty()) {
+            Toast.makeText(this, "Ссылка на аудиофайл отсутствует.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        initExoPlayerIfNeeded();
+
+        try {
+            if (exoPlayer != null) {
+                exoPlayer.stop();
+            }
+
+            MediaItem mediaItem = MediaItem.fromUri(directUrl);
+            exoPlayer.setMediaItem(mediaItem);
+            exoPlayer.prepare();
+
+            exoPlayer.play();
+            currentPlayingUrl = directUrl;
+
+            if (chapterAdapter != null) chapterAdapter.setPlayingUrl(directUrl);
+
+            updateChapterState("play"); // Обновляем состояние кнопки на главе
+            Toast.makeText(this, "Запускаю воспроизведение...", Toast.LENGTH_SHORT).show();
+        } catch (Exception e) {
+            Log.e("BookPage", "Ошибка при подготовке/воспроизведении: " + e.getMessage(), e);
+            Toast.makeText(this, "Не удалось воспроизвести файл.", Toast.LENGTH_SHORT).show();
             currentPlayingUrl = null;
             if (chapterAdapter != null) chapterAdapter.clearPlaying();
         }
     }
 
-    private void setupChapterListWithDbData(int bookId) {
-        recyclerViewChapters = findViewById(R.id.recyclerViewChapters);
-        recyclerViewChapters.setLayoutManager(new LinearLayoutManager(this));
-
-        chapterList = getChaptersForBookFromDB(bookId);
-
-        chapterAdapter = new ChapterAdapter(this, chapterList, this);
-        recyclerViewChapters.setAdapter(chapterAdapter);
+    private void updateChapterState(String state) {
+        // Обновляем состояние кнопки для главы
+        this.currentChapterState = state;
+        chapterAdapter.updateButtonState(state); // Передаем состояние в адаптер глав
     }
 
-    /**
-     * Формируем список глав для книги.
-     * Важно: в вашей БД поле filePath содержит порядковый номер/индекс главы (целое),
-     * а поле sequenceOrder содержит короткий Google Drive fileId (строка).
-     * Мы читаем filePath как номер главы и sequenceOrder как fileId, формируем direct URL
-     * и создаём Chapter(title, duration, directUrl).
-     */
-    private List<Chapter> getChaptersForBookFromDB(int bookId) {
-        List<Chapter> list = new ArrayList<>();
-        SQLiteDatabase db = dbHelper.getDatabase();
-
-        if (db == null || !db.isOpen()) {
-            Toast.makeText(this, "База данных недоступна", Toast.LENGTH_SHORT).show();
-            return list;
-        }
-
-        String selection = "bookId = ?";
-        String[] selectionArgs = { String.valueOf(bookId) };
-
-        Cursor cursor = null;
-        try {
-            // Сортируем по filePath (порядок глав)
-            cursor = db.query("audioFile", null, selection, selectionArgs, null, null, "filePath ASC");
-            if (cursor != null) {
-                while (cursor.moveToNext()) {
-                    // filePath — порядковый номер главы (int)
-                    int filePath = 1;
-                    try {
-                        filePath = cursor.getInt(cursor.getColumnIndexOrThrow("filePath"));
-                    } catch (Exception e) {
-                        // на случай, если в filePath хранится строка — попытка парсинга
-                        try {
-                            String fp = cursor.getString(cursor.getColumnIndexOrThrow("filePath"));
-                            filePath = Integer.parseInt(fp);
-                        } catch (Exception ignored) {
-                        }
-                    }
-
-                    String title = "Глава " + filePath;
-                    String duration = "00:00";
-
-                    // sequenceOrder здесь — короткий id от Google Drive (fileId)
-                    String fileId = null;
-                    try {
-                        fileId = cursor.getString(cursor.getColumnIndexOrThrow("sequenceOrder"));
-                    } catch (Exception e) {
-                        Log.w("BookPage", "sequenceOrder not found or null for bookId=" + bookId, e);
-                    }
-
-                    String directAudioUrl = "";
-                    if (fileId != null && !fileId.trim().isEmpty()) {
-                        directAudioUrl = convertGoogleDriveUrlToDirect(fileId);
-                    }
-
-                    Log.i("BookPage", "Added chapter: title=" + title + ", fileId=" + fileId + ", directUrl=" + directAudioUrl);
-
-                    list.add(new Chapter(title, duration, directAudioUrl));
-                }
-            }
-        } catch (Exception e) {
-            Log.e("BookPage", "Ошибка чтения из БД: " + e.getMessage(), e);
-        } finally {
-            if (cursor != null && !cursor.isClosed()) {
-                cursor.close();
-            }
-        }
-        return list;
-    }
-
-    // Конвертируем разные варианты ссылок/ID Google Drive в прямую ссылку
     private String convertGoogleDriveUrlToDirect(String fullUrlOrId) {
         if (fullUrlOrId == null || fullUrlOrId.isEmpty()) {
             return "";
@@ -322,8 +321,124 @@ public class BookPage extends AppCompatActivity implements ChapterAdapter.OnChap
 
             return "https://drive.google.com/uc?export=download&id=" + fileId;
         } catch (Exception e) {
-            Log.e("BookPage", "Failed to parse Google Drive URL/ID: " + fullUrlOrId, e);
+            Log.e("BookPage", "Не удалось распарсить Google Drive URL/ID: " + fullUrlOrId, e);
             return fullUrlOrId;
         }
+    }
+
+    private long getAudioDuration(String audioUrl) {
+        if (durationCache.containsKey(audioUrl)) {
+            return durationCache.get(audioUrl);
+        }
+
+        long duration = 0;
+        try {
+            MediaItem mediaItem = MediaItem.fromUri(audioUrl);
+            ExoPlayer tempPlayer = new ExoPlayer.Builder(this).build();
+            tempPlayer.setMediaItem(mediaItem);
+            tempPlayer.prepare();
+            duration = tempPlayer.getDuration();
+            tempPlayer.release();
+
+            durationCache.put(audioUrl, duration);
+        } catch (Exception e) {
+            Log.e("BookPage", "Ошибка при получении длительности: " + e.getMessage(), e);
+        }
+        return duration;
+    }
+
+    // Методы для обновления UI
+
+    private void updatePlayerUI() {
+        if (exoPlayer != null) {
+            long currentPosition = exoPlayer.getCurrentPosition();
+            long duration = exoPlayer.getDuration();
+
+            String currentTime = formatDuration(currentPosition);
+            String totalTime = formatDuration(duration);
+
+            txtCurrentTime.setText(currentTime); // Обновляем текущее время
+            txtTotalTime.setText(totalTime); // Обновляем общее время
+
+            // Обновляем SeekBar
+            seekBarProgress.setMax((int) duration);
+            seekBarProgress.setProgress((int) currentPosition);
+        }
+    }
+
+    private void startUpdatingUI() {
+        handler.post(updateUIRunnable); // запускаем обновление времени
+    }
+
+    private void stopUpdatingUI() {
+        handler.removeCallbacks(updateUIRunnable); // останавливаем обновление
+    }
+
+    private String formatDuration(long durationMs) {
+        if (durationMs < 0) {
+            return "00:00";  // Защита от некорректной длительности
+        }
+
+        long minutes = (durationMs / 1000) / 60;
+        long seconds = (durationMs / 1000) % 60;
+
+        return String.format("%02d:%02d", minutes, seconds);  // Форматируем "мм:сс"
+    }
+
+    private void seekBackward10Sec() {
+        if (exoPlayer != null) {
+            long currentPosition = exoPlayer.getCurrentPosition();
+            long newPosition = Math.max(0, currentPosition - 10000); // на 10 секунд назад
+            exoPlayer.seekTo(newPosition);
+            updatePlayerUI(); // Обновляем UI после перемотки
+        }
+    }
+
+    private void seekForward15Sec() {
+        if (exoPlayer != null) {
+            long currentPosition = exoPlayer.getCurrentPosition();
+            long newPosition = Math.min(exoPlayer.getDuration(), currentPosition + 15000); // на 15 секунд вперед
+            exoPlayer.seekTo(newPosition);
+            updatePlayerUI(); // Обновляем UI после перемотки
+        }
+    }
+
+    private List<Chapter> getChaptersForBookFromDB(int bookId) {
+        List<Chapter> list = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getDatabase();
+
+        if (db == null || !db.isOpen()) {
+            Toast.makeText(this, "База данных недоступна", Toast.LENGTH_SHORT).show();
+            return list;
+        }
+
+        String selection = "bookId = ?";
+        String[] selectionArgs = { String.valueOf(bookId) };
+
+        Cursor cursor = null;
+        try {
+            cursor = db.query("audioFile", null, selection, selectionArgs, null, null, "filePath ASC");
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    int filePath = cursor.getInt(cursor.getColumnIndexOrThrow("filePath"));
+                    String title = "Глава " + filePath;
+
+                    String fileId = cursor.getString(cursor.getColumnIndexOrThrow("sequenceOrder"));
+                    String directAudioUrl = convertGoogleDriveUrlToDirect(fileId);
+
+                    long durationMs = getAudioDuration(directAudioUrl);
+                    String duration = formatDuration(durationMs);
+
+                    list.add(new Chapter(title, duration, directAudioUrl));
+                }
+            }
+        } catch (Exception e) {
+            Log.e("BookPage", "Ошибка чтения из БД: " + e.getMessage(), e);
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+        }
+        return list;
     }
 }

@@ -211,7 +211,6 @@
             android:id="@+id/btnWhether"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="25dp"
             app:srcCompat="@drawable/off" />
 
         <!-- Не забудьте закрыть последний ImageView -->

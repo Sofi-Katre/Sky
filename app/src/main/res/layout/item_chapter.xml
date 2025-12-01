@@ -40,7 +40,7 @@
             android:id="@+id/textViewChapterDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="32 мин"
+            android:text="00:00"
             android:textColor="@android:color/darker_gray"
             android:textSize="14sp" />
     </LinearLayout>

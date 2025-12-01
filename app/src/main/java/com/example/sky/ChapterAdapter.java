@@ -22,7 +22,6 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
     private final List<Chapter> chapterList;
     private final OnChapterClickListener listener;
 
-    // Текущий URL, который помечен как воспроизводимый (direct URL)
     private String playingUrl = null;
 
     public ChapterAdapter(Context context, List<Chapter> chapterList, OnChapterClickListener listener) {
@@ -42,15 +41,15 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
     public void onBindViewHolder(@NonNull ChapterViewHolder holder, int position) {
         Chapter currentChapter = chapterList.get(position);
         holder.titleTextView.setText(currentChapter.getTitle());
-        holder.durationTextView.setText(currentChapter.getDuration());
+        holder.durationTextView.setText(currentChapter.getDuration());  // Отображаем длительность
 
-        // Если этот элемент — текущий playingUrl, показываем pause, иначе play
-        if (playingUrl != null && playingUrl.equals(currentChapter.getAudioUrl())) {
-            holder.playButton.setImageResource(R.drawable.icon_pause);
-            holder.playButton.setContentDescription("Pause");
+        // Изменяем состояние кнопки в зависимости от текущего состояния главы
+        if (currentChapter.getState().equals("play")) {
+            holder.playButton.setImageResource(R.drawable.icon_pause); // Если играет
+        } else if (currentChapter.getState().equals("pause")) {
+            holder.playButton.setImageResource(R.drawable.icon_play_circle); // Если на паузе
         } else {
-            holder.playButton.setImageResource(R.drawable.icon_play_circle);
-            holder.playButton.setContentDescription("Play");
+            holder.playButton.setImageResource(R.drawable.icon_play_circle); // Иначе, если стоп
         }
 
         View.OnClickListener clickHandler = v -> {
@@ -68,7 +67,6 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
         return chapterList != null ? chapterList.size() : 0;
     }
 
-    // Пометить, что воспроизводится URL — обновляет только старый и новый позиции для производительности
     public void setPlayingUrl(String url) {
         if (url == null) return;
         if (url.equals(this.playingUrl)) return;
@@ -82,7 +80,6 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
         if (newPos >= 0) notifyItemChanged(newPos);
     }
 
-    // Снять пометку воспроизведения
     public void clearPlaying() {
         if (this.playingUrl == null) return;
         int oldPos = indexOfUrl(this.playingUrl);
@@ -90,7 +87,6 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
         if (oldPos >= 0) notifyItemChanged(oldPos);
     }
 
-    // Вспомогательный поиск позиции по URL
     private int indexOfUrl(String url) {
         if (url == null) return -1;
         for (int i = 0; i < chapterList.size(); i++) {
@@ -100,15 +96,34 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
         return -1;
     }
 
+    // Метод для обновления состояния кнопки
+    public void updateButtonState(String state) {
+        for (int i = 0; i < chapterList.size(); i++) {
+            Chapter chapter = chapterList.get(i);
+            // Устанавливаем состояние кнопки для каждой главы
+            if (playingUrl != null && playingUrl.equals(chapter.getAudioUrl())) {
+                if (state.equals("pause")) {
+                    chapter.setState("pause");
+                } else if (state.equals("play")) {
+                    chapter.setState("play");
+                } else if (state.equals("stop")) {
+                    chapter.setState("stop");
+                }
+            }
+        }
+        notifyDataSetChanged();
+    }
+
+
     public static class ChapterViewHolder extends RecyclerView.ViewHolder {
         public TextView titleTextView;
-        public TextView durationTextView;
+        public TextView durationTextView;  // Для отображения длительности
         public ImageView playButton;
 
-        public ChapterViewHolder(@NonNull View itemView) {
+        public ChapterViewHolder(View itemView) {
             super(itemView);
             titleTextView = itemView.findViewById(R.id.textViewChapterTitle);
-            durationTextView = itemView.findViewById(R.id.textViewChapterDuration);
+            durationTextView = itemView.findViewById(R.id.textViewChapterDuration);  // Инициализируем для длительности
             playButton = itemView.findViewById(R.id.btnPlayChapter);
         }
     }

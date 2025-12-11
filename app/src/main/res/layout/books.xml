@@ -42,22 +42,24 @@
                 android:orientation="horizontal"
                 android:paddingTop="10dp"
                 android:paddingEnd="10dp">
+
                 <ImageView
                     android:id="@+id/btnJaner"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
                     app:srcCompat="@drawable/btnall" />
+
                 <ImageView
-                    android:id="@+id/imageView5"
+                    android:id="@+id/btnClassic"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
                     app:srcCompat="@drawable/btnclassicblack" />
                 <ImageView
-                    android:id="@+id/imageView6"
+                    android:id="@+id/btnKids"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -65,7 +67,7 @@
                     android:padding="9dp"
                     app:srcCompat="@drawable/btnkidsblack" />
                 <ImageView
-                    android:id="@+id/imageView7"
+                    android:id="@+id/btnDetective"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
@@ -89,14 +91,15 @@
                 android:paddingTop="10dp"
                 android:paddingEnd="10dp"
                 android:paddingStart="10dp">
+
                 <ImageView
-                    android:id="@+id/imageView9"
+                    android:id="@+id/btnFilterNew"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginEnd="8dp"
                     app:srcCompat="@drawable/filtertonew" />
                 <ImageView
-                    android:id="@+id/imageView10"
+                    android:id="@+id/btnFilterAlphabet"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     app:srcCompat="@drawable/filtertoalfavitoff" />
@@ -133,13 +136,6 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="25dp"
             app:srcCompat="@drawable/iconbooks" />
-
-        <ImageView
-            android:id="@+id/btnMusic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="25dp"
-            app:srcCompat="@drawable/iconmusic" />
 
         <ImageView
             android:id="@+id/btnWhether"

@@ -14,26 +14,30 @@ import java.util.List;
 
 public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHolder> {
 
-    // --- 1. ДОБАВЛЯЕМ ИНТЕРФЕЙС И ПЕРЕМЕННУЮ СЛУШАТЕЛЯ ---
     public interface OnBookClickListener {
         void onBookClick(Book book);
     }
     private final OnBookClickListener listener;
 
     private final Context context;
-    private final List<Book> bookList;
+    // !!! ИЗМЕНЕНИЕ 1: Убираем final, чтобы список можно было обновлять !!!
+    private List<Book> bookList;
 
-    // --- 2. ОБНОВЛЯЕМ КОНСТРУКТОР ДЛЯ ПРИНЯТИЯ СЛУШАТЕЛЯ ---
     public BooksAdapter(Context context, List<Book> bookList, OnBookClickListener listener) {
         this.context = context;
         this.bookList = bookList;
-        this.listener = listener; // Инициализируем слушателя
+        this.listener = listener;
+    }
+
+    // !!! ИЗМЕНЕНИЕ 2: Добавляем метод updateList для фильтрации !!!
+    public void updateList(List<Book> newList) {
+        this.bookList = newList;
+        notifyDataSetChanged(); // Говорим RecyclerView перерисовать себя с новыми данными
     }
 
     @NonNull
     @Override
     public BookViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        // Убедитесь, что R.layout.item_book существует и содержит ваши элементы карточки
         View view = LayoutInflater.from(context).inflate(R.layout.item_book, parent, false);
         return new BookViewHolder(view);
     }
@@ -55,13 +59,11 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
                 .error(R.drawable.zaglushka)
                 .into(holder.coverImageView);
 
-        // --- 3. ОСТАВЛЯЕМ ТОЛЬКО ОДИН ОБРАБОТЧИК КЛИКА ЧЕРЕЗ ИНТЕРФЕЙС ---
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
-                listener.onBookClick(currentBook); // Вызываем метод в Books.java
+                listener.onBookClick(currentBook);
             }
         });
-        // -------------------------------------------------------------
     }
 
     @Override
@@ -69,9 +71,7 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
         return bookList.size();
     }
 
-    // Вспомогательный метод для преобразования URL Google Drive (остается без изменений)
     private String convertGoogleDriveUrlToDirect(String fullUrl) {
-        // ... (ваш код метода convertGoogleDriveUrlToDirect) ...
         if (fullUrl == null || fullUrl.isEmpty()) return "";
         try {
             int startIndex = fullUrl.indexOf("/d/") + 3;
@@ -89,7 +89,6 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
         }
     }
 
-    // ViewHolder (остается без изменений)
     public static class BookViewHolder extends RecyclerView.ViewHolder {
         public ImageView coverImageView;
         public TextView titleTextView;

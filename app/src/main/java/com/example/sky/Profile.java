@@ -18,7 +18,7 @@ public class Profile extends AppCompatActivity {
 
         // Находим кнопки по их ID
         ImageView btnSleep = findViewById(R.id.btnSleep);
-        ImageView btnMusic = findViewById(R.id.btnMusic);
+        //ImageView btnMusic = findViewById(R.id.btnMusic);
         ImageView btnWhether = findViewById(R.id.btnWhether);
         ImageView btnProfile = findViewById(R.id.btnProfile); // Активная кнопка на текущей странице
 
@@ -26,15 +26,15 @@ public class Profile extends AppCompatActivity {
 
         // Переход на страницу Books (entryPage/Books.java, в зависимости от вашей структуры)
         btnSleep.setOnClickListener(v -> {
-            Intent intent = new Intent(Profile.this, entryPage.class); // или Books.class
+            Intent intent = new Intent(Profile.this, Books.class); // или Books.class
             startActivity(intent);
         });
 
         // Переход на страницу Music (Music.java)
-        btnMusic.setOnClickListener(v -> {
-            Intent intent = new Intent(Profile.this, Music.class);
-            startActivity(intent);
-        });
+//        btnMusic.setOnClickListener(v -> {
+//            Intent intent = new Intent(Profile.this, Music.class);
+//            startActivity(intent);
+//        });
 
         // Переход на страницу Whether/EntryPage (entryPage.java)
         btnWhether.setOnClickListener(v -> {

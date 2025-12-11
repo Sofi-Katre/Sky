@@ -26,7 +26,7 @@ public class entryPage extends AppCompatActivity {
 
         // Находим кнопки по их ID из XML
         ImageView btnSleep = findViewById(R.id.btnSleep);
-        ImageView btnMusic = findViewById(R.id.btnMusic);
+        //ImageView btnMusic = findViewById(R.id.btnMusic);
         ImageView btnProfile = findViewById(R.id.btnProfile);
         // ImageView btnWhether = findViewById(R.id.btnWhether); // Активная кнопка на текущей странице
 
@@ -46,10 +46,10 @@ public class entryPage extends AppCompatActivity {
 
         // *** ИСПРАВЛЕНИЕ: Переход на страницу Music (Music.java) ***
         // Теперь при нажатии на кнопку мы переходим в новое окно, а не управляем шторкой
-        btnMusic.setOnClickListener(v -> {
-            Intent intent = new Intent(entryPage.this, Music.class);
-            startActivity(intent);
-        });
+//        btnMusic.setOnClickListener(v -> {
+//            Intent intent = new Intent(entryPage.this, Music.class);
+//            startActivity(intent);
+//        });
 
 
 //        // 1. Получаем размеры экрана устройства (DisplayMetrics)

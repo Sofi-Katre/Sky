@@ -48,12 +48,7 @@
             android:layout_marginEnd="25dp"
             app:srcCompat="@drawable/iconbooks" /> <!-- Отступ справа -->
 
-        <ImageView
-            android:id="@+id/btnMusic"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="25dp"
-            app:srcCompat="@drawable/iconmusic" /> <!-- Отступ справа -->
+        <!-- Отступ справа -->
 
         <ImageView
             android:id="@+id/btnWhether"

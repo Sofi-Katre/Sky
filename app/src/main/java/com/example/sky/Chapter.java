@@ -6,13 +6,13 @@ public class Chapter implements Serializable {
     private String title;
     private String duration;
     private String audioUrl;
-    private String state; // Добавляем поле для состояния кнопки
+    private String state; // "play", "pause", "stop"
 
     public Chapter(String title, String duration, String audioUrl) {
         this.title = title;
         this.duration = duration;
         this.audioUrl = audioUrl;
-        this.state = "stop"; // По умолчанию состояние - stop
+        this.state = "stop"; // по умолчанию Stop
     }
 
     public Chapter() {}
@@ -49,4 +49,3 @@ public class Chapter implements Serializable {
         this.state = state;
     }
 }
-

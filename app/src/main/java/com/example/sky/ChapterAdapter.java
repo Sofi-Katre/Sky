@@ -1,10 +1,12 @@
 package com.example.sky;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -15,14 +17,14 @@ import java.util.List;
 public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterViewHolder> {
 
     public interface OnChapterClickListener {
-        void onChapterClick(String audioUrl);
+        void onChapterClick(int position);
     }
 
     private final Context context;
     private final List<Chapter> chapterList;
     private final OnChapterClickListener listener;
 
-    private String playingUrl = null;
+    private int playingIndex = -1; // индекс активной главы
 
     public ChapterAdapter(Context context, List<Chapter> chapterList, OnChapterClickListener listener) {
         this.context = context;
@@ -39,22 +41,33 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
 
     @Override
     public void onBindViewHolder(@NonNull ChapterViewHolder holder, int position) {
-        Chapter currentChapter = chapterList.get(position);
-        holder.titleTextView.setText(currentChapter.getTitle());
-        holder.durationTextView.setText(currentChapter.getDuration());  // Отображаем длительность
+        Chapter chapter = chapterList.get(position);
 
-        // Изменяем состояние кнопки в зависимости от текущего состояния главы
-        if (currentChapter.getState().equals("play")) {
-            holder.playButton.setImageResource(R.drawable.icon_pause); // Если играет
-        } else if (currentChapter.getState().equals("pause")) {
-            holder.playButton.setImageResource(R.drawable.icon_play_circle); // Если на паузе
+        holder.titleTextView.setText(chapter.getTitle());
+        holder.durationTextView.setText(chapter.getDuration());
+
+        // Подсветка активной главы
+        if (position == playingIndex) {
+            holder.itemLayout.setBackgroundColor(Color.parseColor("#FFF9C4")); // светло-жёлтый
         } else {
-            holder.playButton.setImageResource(R.drawable.icon_play_circle); // Иначе, если стоп
+            holder.itemLayout.setBackgroundColor(Color.WHITE);
+        }
+
+        // Иконка Play/Pause
+        switch (chapter.getState()) {
+            case "play":
+                holder.playButton.setImageResource(R.drawable.icon_pause);
+                break;
+            case "pause":
+                holder.playButton.setImageResource(R.drawable.icon_play_circle);
+                break;
+            default:
+                holder.playButton.setImageResource(R.drawable.icon_play_circle);
         }
 
         View.OnClickListener clickHandler = v -> {
-            if (listener != null && currentChapter.getAudioUrl() != null) {
-                listener.onChapterClick(currentChapter.getAudioUrl());
+            if (listener != null) {
+                listener.onChapterClick(holder.getAdapterPosition());
             }
         };
 
@@ -62,68 +75,70 @@ public class ChapterAdapter extends RecyclerView.Adapter<ChapterAdapter.ChapterV
         holder.playButton.setOnClickListener(clickHandler);
     }
 
+    public void updateChapterProgress(int chapterIndex, long currentMs) {
+        if (chapterIndex < 0 || chapterIndex >= chapterList.size()) return;
+        Chapter chapter = chapterList.get(chapterIndex);
+        chapter.setDuration(format(currentMs)); // используем форматирование
+        notifyItemChanged(chapterIndex);
+    }
+
+    // Форматирование времени
+    private String format(long ms) {
+        long s = ms / 1000;
+        return String.format("%02d:%02d", s / 60, s % 60);
+    }
+
     @Override
     public int getItemCount() {
-        return chapterList != null ? chapterList.size() : 0;
+        return chapterList.size();
     }
 
-    public void setPlayingUrl(String url) {
-        if (url == null) return;
-        if (url.equals(this.playingUrl)) return;
+    /** Установить активную главу и подсветить её */
+    public void setPlaying(int position) {
+        if (position < 0 || position >= chapterList.size()) return;
 
-        int oldPos = indexOfUrl(this.playingUrl);
-        int newPos = indexOfUrl(url);
+        int oldIndex = playingIndex;
+        playingIndex = position;
 
-        this.playingUrl = url;
-
-        if (oldPos >= 0) notifyItemChanged(oldPos);
-        if (newPos >= 0) notifyItemChanged(newPos);
-    }
-
-    public void clearPlaying() {
-        if (this.playingUrl == null) return;
-        int oldPos = indexOfUrl(this.playingUrl);
-        this.playingUrl = null;
-        if (oldPos >= 0) notifyItemChanged(oldPos);
-    }
-
-    private int indexOfUrl(String url) {
-        if (url == null) return -1;
+        // Обновляем состояния всех глав
         for (int i = 0; i < chapterList.size(); i++) {
-            Chapter c = chapterList.get(i);
-            if (url.equals(c.getAudioUrl())) return i;
-        }
-        return -1;
-    }
-
-    // Метод для обновления состояния кнопки
-    public void updateButtonState(String state) {
-        for (int i = 0; i < chapterList.size(); i++) {
-            Chapter chapter = chapterList.get(i);
-            // Устанавливаем состояние кнопки для каждой главы
-            if (playingUrl != null && playingUrl.equals(chapter.getAudioUrl())) {
-                if (state.equals("pause")) {
-                    chapter.setState("pause");
-                } else if (state.equals("play")) {
-                    chapter.setState("play");
-                } else if (state.equals("stop")) {
-                    chapter.setState("stop");
-                }
+            if (i == playingIndex) {
+                chapterList.get(i).setState("play");
+            } else {
+                chapterList.get(i).setState("stop");
             }
         }
-        notifyDataSetChanged();
+
+        if (oldIndex >= 0) notifyItemChanged(oldIndex);
+        notifyItemChanged(playingIndex);
     }
 
+    /** Поставить на паузу активную главу */
+    public void pauseChapter(int position) {
+        if (position < 0 || position >= chapterList.size()) return;
+        chapterList.get(position).setState("pause");
+        notifyItemChanged(position);
+    }
+
+    /** Сбросить активную главу */
+    public void clearPlaying() {
+        if (playingIndex >= 0 && playingIndex < chapterList.size()) {
+            chapterList.get(playingIndex).setState("stop");
+            notifyItemChanged(playingIndex);
+            playingIndex = -1;
+        }
+    }
 
     public static class ChapterViewHolder extends RecyclerView.ViewHolder {
-        public TextView titleTextView;
-        public TextView durationTextView;  // Для отображения длительности
+        public TextView titleTextView, durationTextView;
         public ImageView playButton;
+        public LinearLayout itemLayout;
 
-        public ChapterViewHolder(View itemView) {
+        public ChapterViewHolder(@NonNull View itemView) {
             super(itemView);
+            itemLayout = itemView.findViewById(R.id.chapterItemLayout); // контейнер для подсветки
             titleTextView = itemView.findViewById(R.id.textViewChapterTitle);
-            durationTextView = itemView.findViewById(R.id.textViewChapterDuration);  // Инициализируем для длительности
+            durationTextView = itemView.findViewById(R.id.textViewChapterDuration);
             playButton = itemView.findViewById(R.id.btnPlayChapter);
         }
     }

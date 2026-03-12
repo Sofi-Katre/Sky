@@ -44,27 +44,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupNavigationButtons() {
+        // Кнопка "Согласен" (Оранжевая)
+        // Теперь она ведет на ПЕРВУЮ страницу инструкций, как и было задумано
         Button btnInstraction = findViewById(R.id.btnInstaction);
-        btnInstraction.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, instraction1.class);
-            startActivity(intent);
-        });
+        if (btnInstraction != null) {
+            btnInstraction.setOnClickListener(v -> {
+                Intent intent = new Intent(MainActivity.this, instraction1.class);
+                startActivity(intent);
+            });
+        }
 
+        // Кнопка "Нет" / "Регистрация" (Фиолетовая)
+        // ТЕПЕРЬ она ведет строго на страницу входа через Google
         Button btnRegistration = findViewById(R.id.btnRegistration);
-        btnRegistration.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, entryTelegram.class);
-            startActivity(intent);
-        });
-
-        // Предполагается, что у вас есть кнопка для перехода в Books Activity
-        Button btnBooks = findViewById(R.id.btnRegistration);
-        if (btnBooks != null) {
-            btnBooks.setOnClickListener(v -> {
-                Intent intent = new Intent(MainActivity.this, Books.class);
+        if (btnRegistration != null) {
+            btnRegistration.setOnClickListener(v -> {
+                // Удаляем переход в Books и оставляем только вход через Google
+                Intent intent = new Intent(MainActivity.this, entryGoogle.class);
                 startActivity(intent);
             });
         }
     }
+
 
     // Внутренний класс AsyncTask для загрузки БД и её открытия
     private class LoadDatabaseTask extends AsyncTask<Void, Void, Boolean> {

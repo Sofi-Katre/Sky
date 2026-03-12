@@ -28,7 +28,7 @@
 
         <!-- Активы -->
         <activity android:name=".entryPage" android:exported="true" />
-        <activity android:name=".entryTelegram" android:exported="true" />
+        <activity android:name=".entryGoogle" android:exported="true" />
         <activity android:name=".instraction1" android:exported="true" />
         <activity android:name=".instraction2" android:exported="true" />
         <activity android:name=".instraction3" android:exported="true" />
@@ -38,6 +38,8 @@
         <activity android:name=".Music" android:exported="true" />
         <activity android:name=".Profile" android:exported="true" />
         <activity android:name=".BookPage" android:exported="true" />
+
+        <service android:name=".AudioService" android:foregroundServiceType="mediaPlayback" android:exported="false" />
 
     </application>
 </manifest>

@@ -12,4 +12,6 @@
     <string name="Redact">Изменить</string>
     <string name="City">Нижний Тагил</string>
     <string name="Back">Назад</string>
+    <string name="channel_name">Воспроизведение</string>
+    <string name="channel_desc">Управление плеером в шторке</string>
 </resources>

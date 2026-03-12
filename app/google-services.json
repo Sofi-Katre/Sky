@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "730004721591",
+    "project_id": "skybooks-24b83",
+    "storage_bucket": "skybooks-24b83.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:730004721591:android:4480f6d3a280eccc4d6232",
+        "android_client_info": {
+          "package_name": "com.example.sky"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "730004721591-f23l46pr7pg4je10j3l6a6efuu671fo5.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.sky",
+            "certificate_hash": "61e479259626f8900016efe9545af336991ebad1"
+          }
+        },
+        {
+          "client_id": "730004721591-7dbumpu35gbd6mmr7am6pjc2qllsnofm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBKMxFSSp6Umt2J1IgeSeBRVXnHqcrea9Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "730004721591-7dbumpu35gbd6mmr7am6pjc2qllsnofm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

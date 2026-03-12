@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="10dp"
             android:backgroundTint="@color/blueEntry"
-            android:text="@string/Entry" />
+            android:text="Войти через Google" />
 
     </LinearLayout>
 

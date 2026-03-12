@@ -21,7 +21,7 @@ public class instraction5 extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // Создаем Intent для перехода на Activity instraction
-                Intent intent = new Intent(instraction5.this, entryTelegram.class);
+                Intent intent = new Intent(instraction5.this, entryGoogle.class);
                 // Запускаем новое Activity
                 startActivity(intent);
             }

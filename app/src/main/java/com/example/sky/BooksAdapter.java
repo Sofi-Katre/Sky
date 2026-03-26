@@ -1,26 +1,34 @@
 package com.example.sky;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.bumptech.glide.Glide;
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHolder> {
 
     public interface OnBookClickListener {
         void onBookClick(Book book);
+        void onFavoriteClick(Book book);
     }
-    private final OnBookClickListener listener;
 
+    private final OnBookClickListener listener;
     private final Context context;
-    // !!! ИЗМЕНЕНИЕ 1: Убираем final, чтобы список можно было обновлять !!!
     private List<Book> bookList;
 
     public BooksAdapter(Context context, List<Book> bookList, OnBookClickListener listener) {
@@ -29,10 +37,9 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
         this.listener = listener;
     }
 
-    // !!! ИЗМЕНЕНИЕ 2: Добавляем метод updateList для фильтрации !!!
     public void updateList(List<Book> newList) {
         this.bookList = newList;
-        notifyDataSetChanged(); // Говорим RecyclerView перерисовать себя с новыми данными
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -50,7 +57,20 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
         holder.authorTextView.setText("Автор: " + currentBook.author);
         holder.genresTextView.setText("Жанр: " + currentBook.genre);
         holder.dateTextView.setText(currentBook.date);
-        holder.iconImageView.setVisibility(View.VISIBLE);
+
+        // Иконка теперь всегда берет актуальный статус из объекта Book
+        holder.iconImageView.setImageResource(currentBook.isFavorite() ? R.drawable.zakladkaon : R.drawable.zakladkaoff);
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) listener.onBookClick(currentBook);
+        });
+
+        // --- ИСПРАВЛЕНИЕ: Отправляем клик в Books.java, где живет логика Firebase ---
+        holder.iconImageView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onFavoriteClick(currentBook);
+            }
+        });
 
         String directImageUrl = convertGoogleDriveUrlToDirect(currentBook.imageUrl);
         Glide.with(context)
@@ -58,13 +78,8 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
                 .placeholder(R.drawable.zaglushka)
                 .error(R.drawable.zaglushka)
                 .into(holder.coverImageView);
-
-        holder.itemView.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onBookClick(currentBook);
-            }
-        });
     }
+
 
     @Override
     public int getItemCount() {
@@ -89,15 +104,13 @@ public class BooksAdapter extends RecyclerView.Adapter<BooksAdapter.BookViewHold
         }
     }
 
-    public static class BookViewHolder extends RecyclerView.ViewHolder {
-        public ImageView coverImageView;
-        public TextView titleTextView;
-        public ImageView iconImageView;
-        public TextView authorTextView;
-        public TextView genresTextView;
-        public TextView dateTextView;
+    static class BookViewHolder extends RecyclerView.ViewHolder {
+        ImageView coverImageView;
+        TextView titleTextView;
+        ImageView iconImageView;
+        TextView authorTextView, genresTextView, dateTextView;
 
-        public BookViewHolder(@NonNull View itemView) {
+        BookViewHolder(@NonNull View itemView) {
             super(itemView);
             coverImageView = itemView.findViewById(R.id.imageViewCover);
             titleTextView = itemView.findViewById(R.id.textViewTitle);

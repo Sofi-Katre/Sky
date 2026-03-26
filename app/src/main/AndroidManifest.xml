@@ -6,6 +6,11 @@
     <!-- *** ДОБАВЛЕНО РАЗРЕШЕНИЕ НА ИНТЕРНЕТ *** -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+
 
     <application
         android:allowBackup="true"
@@ -35,9 +40,17 @@
         <activity android:name=".instraction4" android:exported="true" />
         <activity android:name=".instraction5" android:exported="true" />
         <activity android:name=".Books" android:exported="true" />
-        <activity android:name=".Music" android:exported="true" />
         <activity android:name=".Profile" android:exported="true" />
-        <activity android:name=".BookPage" android:exported="true" />
+        <activity
+            android:name=".Music"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize" />
+
+        <activity
+            android:name=".BookPage"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize" />
+
 
         <service android:name=".AudioService" android:foregroundServiceType="mediaPlayback" android:exported="false" />
 

@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.File;
@@ -22,14 +23,12 @@ import java.net.URL;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Используем предоставленный вами File ID для формирования прямой ссылки
-    private static final String FILE_ID = "1HhkpkjGKUMHoKOJaProc92Yxko0a6_LB";
+    private static final String FILE_ID = "1d5r568tZCQazY7OJKNfnay5F77eAytHk";
     private static final String TAG = "MainActivity";
     private static final String DB_NAME = "MyDB.db";
 
     private DatabaseHelper mDBHelper;
     private SQLiteDatabase mDb;
-    // UI элементы (кнопки)
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,42 +37,29 @@ public class MainActivity extends AppCompatActivity {
 
         setupNavigationButtons();
 
-        // Запускаем процесс загрузки и открытия БД асинхронно
-        // Передаем в задачу текущий контекст Activity
+        // Запускаем загрузку базы
         new LoadDatabaseTask(this).execute();
     }
 
     private void setupNavigationButtons() {
-        // Кнопка "Согласен" (Оранжевая)
-        // Теперь она ведет на ПЕРВУЮ страницу инструкций, как и было задумано
         Button btnInstraction = findViewById(R.id.btnInstaction);
         if (btnInstraction != null) {
-            btnInstraction.setOnClickListener(v -> {
-                Intent intent = new Intent(MainActivity.this, instraction1.class);
-                startActivity(intent);
-            });
+            btnInstraction.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, instraction1.class)));
         }
 
-        // Кнопка "Нет" / "Регистрация" (Фиолетовая)
-        // ТЕПЕРЬ она ведет строго на страницу входа через Google
         Button btnRegistration = findViewById(R.id.btnRegistration);
         if (btnRegistration != null) {
             btnRegistration.setOnClickListener(v -> {
-                // Удаляем переход в Books и оставляем только вход через Google
-                Intent intent = new Intent(MainActivity.this, entryGoogle.class);
-                startActivity(intent);
+                startActivity(new Intent(MainActivity.this, entryGoogle.class));
+                finish();
             });
         }
     }
 
-
-    // Внутренний класс AsyncTask для загрузки БД и её открытия
     private class LoadDatabaseTask extends AsyncTask<Void, Void, Boolean> {
-        private Context context;
+        private final Context context;
 
-        public LoadDatabaseTask(Context context) {
-            this.context = context;
-        }
+        LoadDatabaseTask(Context context) { this.context = context; }
 
         @Override
         protected void onPreExecute() {
@@ -84,73 +70,44 @@ public class MainActivity extends AppCompatActivity {
         protected Boolean doInBackground(Void... voids) {
             mDBHelper = new DatabaseHelper(context);
 
-            if (mDBHelper.isDatabaseDownloaded()) {
-                Log.d(TAG, "База данных уже загружена локально.");
-            } else {
-                Log.d(TAG, "База данных не найдена локально, скачиваем с Google Drive...");
-                // --- РЕАЛЬНЫЙ КОД СКАЧИВАНИЯ ---
-                HttpURLConnection connection = null;
-                InputStream inputStream = null;
-                OutputStream outputStream = null;
-                try {
-                    // *** ИСПРАВЛЕННАЯ СТРОКА URL ***
-                    String urlString = "https://drive.google.com/uc?export=download&id=" + FILE_ID;
-                    URL url = new URL(urlString); // MalformedURLException больше не возникнет
+            boolean dbReady = false;
 
-                    connection = (HttpURLConnection) url.openConnection();
-                    connection.connect();
+            // Попытка скачать с Google Drive
+            if (!mDBHelper.isDatabaseDownloaded()) {
+                Log.d(TAG, "База данных не найдена локально, пробуем скачать с Google Drive...");
+                dbReady = downloadDatabaseFromDrive(context);
 
-                    if (connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                        Log.e(TAG, "Server returned HTTP " + connection.getResponseCode());
-                        return false;
-                    }
-
-                    String dbPathDir = context.getApplicationInfo().dataDir + "/databases/";
-                    File dbDir = new File(dbPathDir);
-                    if (!dbDir.exists()) dbDir.mkdirs();
-
-                    inputStream = connection.getInputStream();
-                    String outFileName = dbPathDir + DB_NAME;
-                    outputStream = new FileOutputStream(outFileName);
-
-                    byte[] buffer = new byte[1024];
-                    int length;
-                    while ((length = inputStream.read(buffer)) > 0) {
-                        outputStream.write(buffer, 0, length);
-                    }
-                    outputStream.flush();
-                    Log.d(TAG, "Database downloaded successfully.");
-                } catch (IOException e) {
-                    Log.e(TAG, "Download failed with exception", e);
-                    return false;
-                } finally {
-                    if (connection != null) connection.disconnect();
-                    try {
-                        if (outputStream != null) outputStream.close();
-                        if (inputStream != null) inputStream.close();
-                    } catch (IOException e) { e.printStackTrace(); }
+                if (!dbReady) {
+                    Log.w(TAG, "Не удалось скачать с Google Drive, используем локальную базу из assets.");
+                    dbReady = copyDatabaseFromAssets(context);
                 }
-                // --- КОНЕЦ КОДА СКАЧИВАНИЯ ---
+            } else {
+                Log.d(TAG, "База данных уже локально.");
+                dbReady = true;
             }
 
-            // После того как файл гарантированно существует локально:
+            if (!dbReady) return false;
+
+            // Открываем базу
             try {
                 mDBHelper.openDatabase();
                 mDb = mDBHelper.getDatabase();
                 if (mDb != null) {
-                    Cursor cursor = mDb.rawQuery("SELECT * FROM user LIMIT 1", null);
-
-                    if (cursor.moveToFirst()) {
-                        Log.d(TAG, "Данные из БД: Найдена первая запись в таблице user.");
-                        cursor.close();
-                    } else {
-                        Log.d(TAG, "Данные из БД: Таблица user пуста.");
+                    Cursor cursor = null;
+                    try {
+                        cursor = mDb.rawQuery("SELECT * FROM user LIMIT 1", null);
+                        if (cursor != null && cursor.moveToFirst()) {
+                            Log.d(TAG, "Данные из БД: найдена первая запись.");
+                        } else {
+                            Log.d(TAG, "Таблица user пуста.");
+                        }
+                    } finally {
+                        if (cursor != null) cursor.close();
                     }
                 }
-                return true; // Все прошло успешно
-
+                return true;
             } catch (SQLException e) {
-                Log.e(TAG, "Ошибка при открытии БД после загрузки.", e);
+                Log.e(TAG, "Ошибка при открытии базы данных", e);
                 return false;
             }
         }
@@ -161,7 +118,96 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(context, "Критическая ошибка при подготовке базы данных.", Toast.LENGTH_LONG).show();
             } else {
                 Toast.makeText(context, "База данных готова к использованию.", Toast.LENGTH_SHORT).show();
-                // БД готова. Пользователь может нажимать на кнопки навигации.
+            }
+        }
+
+        // -----------------------------
+        // Скачивание с Google Drive
+        private boolean downloadDatabaseFromDrive(Context context) {
+            HttpURLConnection connection = null;
+            InputStream inputStream = null;
+            OutputStream outputStream = null;
+
+            try {
+                String urlString = "https://drive.google.com/uc?export=download&id=" + FILE_ID;
+                URL url = new URL(urlString);
+                connection = (HttpURLConnection) url.openConnection();
+                connection.setInstanceFollowRedirects(true);
+                connection.connect();
+
+                int responseCode = connection.getResponseCode();
+                String contentType = connection.getContentType();
+
+                if (!"application/x-sqlite3".equals(contentType) &&
+                        !"application/octet-stream".equals(contentType)) {
+                    Log.e(TAG, "Google Drive вернул HTML или неподходящий файл: " + contentType);
+                    return false;
+                }
+
+                File dbDir = new File(context.getApplicationInfo().dataDir + "/databases/");
+                if (!dbDir.exists()) dbDir.mkdirs();
+
+                String outFileName = dbDir + "/" + DB_NAME;
+                inputStream = connection.getInputStream();
+                outputStream = new FileOutputStream(outFileName);
+
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+                outputStream.flush();
+
+                Log.d(TAG, "База успешно скачана с Google Drive!");
+                return true;
+            } catch (IOException e) {
+                Log.e(TAG, "Ошибка при скачивании базы с Google Drive", e);
+                return false;
+            } finally {
+                try {
+                    if (outputStream != null) outputStream.close();
+                    if (inputStream != null) inputStream.close();
+                    if (connection != null) connection.disconnect();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        // -----------------------------
+        // Копирование базы из assets
+        private boolean copyDatabaseFromAssets(Context context) {
+            InputStream inputStream = null;
+            OutputStream outputStream = null;
+
+            try {
+                inputStream = context.getAssets().open(DB_NAME);
+
+                File dbDir = new File(context.getApplicationInfo().dataDir + "/databases/");
+                if (!dbDir.exists()) dbDir.mkdirs();
+
+                String outFileName = dbDir + "/" + DB_NAME;
+                outputStream = new FileOutputStream(outFileName);
+
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) > 0) {
+                    outputStream.write(buffer, 0, length);
+                }
+                outputStream.flush();
+
+                Log.d(TAG, "База скопирована из assets.");
+                return true;
+            } catch (IOException e) {
+                Log.e(TAG, "Ошибка при копировании базы из assets", e);
+                return false;
+            } finally {
+                try {
+                    if (outputStream != null) outputStream.close();
+                    if (inputStream != null) inputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

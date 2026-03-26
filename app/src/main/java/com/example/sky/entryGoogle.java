@@ -31,19 +31,17 @@ public class entryGoogle extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.entry);
 
-        // 1. Инициализируем Firebase Auth
         mAuth = FirebaseAuth.getInstance();
 
-        // 2. Настраиваем вход через Google
-        // R.string.default_web_client_id создается автоматически из google-services.json
+        // --- ИСПРАВЛЕННЫЙ БЛОК: ID вставлен напрямую текстом ---
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestIdToken("730004721591-7dbumpu35gbd6mmr7am6pjc2qllsnofm.apps.googleusercontent.com")
                 .requestEmail()
                 .build();
+        // -------------------------------------------------------
 
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // 3. Находим кнопку и вешаем на неё логику входа
         Button btnEntry = findViewById(R.id.btnEntry);
         btnEntry.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -53,7 +51,6 @@ public class entryGoogle extends AppCompatActivity {
         });
     }
 
-    // Если пользователь уже входил ранее, пропускаем экран логина
     @Override
     public void onStart() {
         super.onStart();
@@ -72,13 +69,11 @@ public class entryGoogle extends AppCompatActivity {
     public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        // Результат из окна выбора аккаунта Google
         if (requestCode == RC_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
             try {
                 GoogleSignInAccount account = task.getResult(ApiException.class);
                 if (account != null) {
-                    // Теперь авторизуем этот аккаунт в Firebase
                     firebaseAuthWithGoogle(account.getIdToken());
                 }
             } catch (ApiException e) {
@@ -92,11 +87,9 @@ public class entryGoogle extends AppCompatActivity {
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        // Вход успешен!
                         FirebaseUser user = mAuth.getCurrentUser();
                         updateUI(user);
                     } else {
-                        // Ошибка входа
                         Toast.makeText(entryGoogle.this, "Ошибка авторизации Firebase", Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -104,10 +97,10 @@ public class entryGoogle extends AppCompatActivity {
 
     private void updateUI(FirebaseUser user) {
         if (user != null) {
-            // Переходим на следующую страницу (entryPage или главную)
             Intent intent = new Intent(entryGoogle.this, entryPage.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
             startActivity(intent);
-            finish(); // Закрываем экран входа
+            finish();
         }
     }
 }

@@ -1,25 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/_63b5a7630022e5bf51821c91813966c">
 
+    <!-- Используем веса или проценты вместо жесткого marginTop -->
     <ImageView
         android:id="@+id/imageView"
-        android:layout_width="302dp"
-        android:layout_height="163dp"
-        android:layout_marginTop="176dp"
+        android:layout_width="296dp"
+        android:layout_height="153dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomPanel"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.495"
+        app:layout_constraintHeight_max="200dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        app:layout_constraintWidth_percent="0.7"
         app:srcCompat="@drawable/img2" />
 
     <LinearLayout
+        android:id="@+id/bottomPanel"
         android:layout_width="match_parent"
-        android:layout_height="236dp"
+        android:layout_height="wrap_content"
+        android:minHeight="150dp"
         android:background="@color/backBlure"
         android:gravity="center"
         android:orientation="horizontal"
@@ -28,13 +34,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <!-- Отступ справа от первой кнопки -->
-
         <Button
             android:id="@+id/btnEntry"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="10dp"
             android:backgroundTint="@color/blueEntry"
             android:text="Войти через Google" />
 

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -7,7 +8,7 @@
     android:background="@drawable/c9e45aeebf33800d52c4ec4338623f69"
     tools:context=".Profile">
 
-    <!-- Нижнее меню навигации, закрепленное внизу экрана -->
+    <!-- Нижнее меню навигации -->
     <LinearLayout
         android:id="@+id/linearLayoutBottomNav"
         android:layout_width="match_parent"
@@ -39,67 +40,65 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             app:srcCompat="@drawable/iconprofile2" />
-
     </LinearLayout>
 
+    <!-- Основной контейнер профиля -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="314dp"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="84dp"
         android:background="@color/white"
         android:orientation="vertical"
         android:padding="16dp"
         app:layout_constraintBottom_toTopOf="@+id/linearLayoutBottomNav"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0">
+        app:layout_constraintTop_toTopOf="parent">
 
+        <!-- Имя пользователя -->
         <TextView
-            android:id="@+id/txtUser"
+            android:id="@+id/UserName"
             android:layout_width="wrap_content"
-            android:layout_marginTop="25dp"
-            android:layout_height="34dp"
-            android:textSize="18sp"
+            android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="@string/UserName"
+            android:layout_marginTop="25dp"
+            android:text=""
             android:textColor="@color/black"
-            android:textStyle="bold" />
+            android:textSize="18sp"
+            android:textStyle="bold"/>
 
+        <!-- Фото профиля -->
+        <ImageView
+            android:id="@+id/userPhoto"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="16dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/zaglushka"
+            android:contentDescription="@string/UserName"/>
+
+        <!-- Email пользователя -->
+        <TextView
+            android:id="@+id/userEmail"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:text=""
+            android:textColor="@color/black"
+            android:textSize="16sp"/>
+
+        <!-- Кнопка выхода из системы -->
         <Button
-            android:id="@+id/btnRedact1"
+            android:id="@+id/btnSignOut"
             android:layout_width="130dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:backgroundTint="@color/blueEntry"
-            android:text="@string/Redact" />
-
-        <!-- Группа 2: Город и кнопка (горизонтально) -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:backgroundTint="@color/blueEntry"
+            android:text="Выйти"/>
 
-            <TextView
-                android:id="@+id/txtCity"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:text="@string/City"
-                android:textColor="@color/black" />
-
-            <Button
-                android:id="@+id/btnRedact2"
-                android:layout_width="130dp"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="@color/blueEntry"
-                android:text="@string/Redact" />
-        </LinearLayout>
     </LinearLayout>
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>

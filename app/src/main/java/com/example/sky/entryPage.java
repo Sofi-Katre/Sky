@@ -2,150 +2,217 @@ package com.example.sky;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.DisplayMetrics;
+import android.util.Log;
 import android.util.TypedValue;
-import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.coordinatorlayout.widget.CoordinatorLayout;
-import androidx.core.widget.NestedScrollView;
-import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.gms.auth.api.signin.GoogleSignIn;
+import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 public class entryPage extends AppCompatActivity {
 
-    private BottomSheetBehavior<NestedScrollView> bottomSheetBehavior;
-    private ImageView btnToDay;
-    private ImageView btnAWeek;
-    private boolean isTodayActive = true;
+    private RecyclerView recyclerViewFavorites;
+    private FavoritesAdapter favoritesAdapter;
+    private DatabaseHelper dbHelper;
+
+    // -------------------- фильтры и сортировка --------------------
+    private String currentGenreFilter = null; // null = все жанры
+    private String currentSortMode = "date"; // "date" или "alpha"
+
+    // -------------------- кнопки --------------------
+    private ImageView btnJaner, btnClassic, btnKids, btnDetective;
+    private ImageView btnFilterNew, btnFilterAlphabet;
+
+    // -------------------- ресурсы для визуала --------------------
+    private int resBtnAllActive = R.drawable.btnall;
+    private int resBtnAllInactive = R.drawable.btnalloff;
+
+    private int resBtnClassicActive = R.drawable.btnclassic;
+    private int resBtnClassicInactive = R.drawable.btnclassicblack;
+
+    private int resBtnKidsActive = R.drawable.btnkids;
+    private int resBtnKidsInactive = R.drawable.btnkidsblack;
+
+    private int resBtnDetectiveActive = R.drawable.btndetective;
+    private int resBtnDetectiveInactive = R.drawable.btndetectiveblack;
+
+    private int resSortDateActive = R.drawable.filtertonew;
+    private int resSortDateInactive = R.drawable.filtertonewoff;
+
+    private int resSortAlphaActive = R.drawable.filtertoalfavit;
+    private int resSortAlphaInactive = R.drawable.filtertoalfavitoff;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // ----------------- Проверка входа -----------------
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
+        if (account == null) {
+            startActivity(new Intent(this, entryGoogle.class));
+            finish();
+            return;
+        }
+
         setContentView(R.layout.entry_page);
 
-        // Находим кнопки по их ID из XML
-        ImageView btnSleep = findViewById(R.id.btnSleep);
-        //ImageView btnMusic = findViewById(R.id.btnMusic);
-        ImageView btnProfile = findViewById(R.id.btnProfile);
-        // ImageView btnWhether = findViewById(R.id.btnWhether); // Активная кнопка на текущей странице
+        dbHelper = new DatabaseHelper(this);
 
-        // Устанавливаем обработчики нажатий (Listeners) для НАВИГАЦИИ
+        // ----------------- RecyclerView -----------------
+        recyclerViewFavorites = findViewById(R.id.recyclerViewFavorites);
+        recyclerViewFavorites.setLayoutManager(new LinearLayoutManager(this));
 
-        // Переход на страницу Books (Books.java)
-        btnSleep.setOnClickListener(v -> {
-            Intent intent = new Intent(entryPage.this, Books.class);
-            startActivity(intent);
-        });
+        // ----------------- Кнопки -----------------
+        setupFilterButtons();
 
-        // Переход на страницу Profile (Profile.java)
-        btnProfile.setOnClickListener(v -> {
-            Intent intent = new Intent(entryPage.this, Profile.class);
-            startActivity(intent);
-        });
+        // ----------------- Нижняя навигация -----------------
+        setupNavigation();
 
-        // *** ИСПРАВЛЕНИЕ: Переход на страницу Music (Music.java) ***
-        // Теперь при нажатии на кнопку мы переходим в новое окно, а не управляем шторкой
-//        btnMusic.setOnClickListener(v -> {
-//            Intent intent = new Intent(entryPage.this, Music.class);
-//            startActivity(intent);
-//        });
-
-
-//        // 1. Получаем размеры экрана устройства (DisplayMetrics)
-//        DisplayMetrics displayMetrics = new DisplayMetrics();
-//        getWindowManager().getDefaultDisplay().getMetrics(displayMetrics);
-//        int screenHeight = displayMetrics.heightPixels;
-//
-//        int sheetHeight = (int) (screenHeight * 0.75);
-
-//        // 3. Находим вашу шторку по ID
-//        NestedScrollView bottomSheet = findViewById(R.id.bottom_sheet);
-//
-//        // Устанавливаем параметры высоты макета для шторки
-//        CoordinatorLayout.LayoutParams layoutParams = (CoordinatorLayout.LayoutParams) bottomSheet.getLayoutParams();
-//        layoutParams.height = sheetHeight;
-//        bottomSheet.setLayoutParams(layoutParams);
-//
-//        // Получаем объект поведения Bottom Sheet для этого View
-//        bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-//
-//        // 4. Вычисляем минимальную высоту шторки в пикселях
-//        int peekHeightInPixels = (int) (screenHeight * 0.40);
-//        bottomSheetBehavior.setPeekHeight(peekHeightInPixels);
-//
-//        // Устанавливаем начальное состояние шторки как свернутое
-//        bottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);
-//
-//        // *** НОВОЕ: Добавляем Callback для отслеживания движения шторки пользователем ***
-//        bottomSheetBehavior.addBottomSheetCallback(new BottomSheetBehavior.BottomSheetCallback() {
-//            @Override
-//            public void onStateChanged(View bottomSheet, int newState) {
-//                // Этот метод вызывается, когда состояние шторки меняется (свернута, развернута, скрыта и т.д.)
-//                // Здесь вы можете добавить логику, если нужно что-то делать при достижении определенного состояния
-//            }
-//
-//            @Override
-//            public void onSlide(View bottomSheet, float slideOffset) {
-//                // Этот метод вызывается каждый раз, когда шторка двигается (пользователь тянет ее)
-//                // Здесь вы можете реагировать на движение (например, менять прозрачность фона)
-//                // slideOffset меняется от 0 (свернута) до 1 (развернута)
-//                // В вашем случае, если вы просто хотите, чтобы она двигалась, ничего писать тут не нужно -
-//                // само наличие BottomSheetBehavior уже обеспечивает это движение.
-//            }
-//        });
-
-
-//        //ОБРАБОТЧИК КНОПОК С ПОГОДОЙ НА ДЕНЬ И НА НЕДЕЛЮ (без изменений)
-//
-//        // Находим наши ImageView по ID
-//        btnToDay = findViewById(R.id.btnToDay);
-//        btnAWeek = findViewById(R.id.btnAWeek);
-//
-//        setActiveButton(isTodayActive);
-//
-//        // Используем лямбды для последовательности
-//        btnToDay.setOnClickListener(v -> {
-//            if (isTodayActive) return;
-//            setActiveButton(true);
-//        });
-//
-//        btnAWeek.setOnClickListener(v -> {
-//            if (!isTodayActive) return;
-//            setActiveButton(false);
-//        });
-
+        // ----------------- Загрузка избранного -----------------
+        loadFavoriteBooks();
     }
 
-    // Вспомогательный метод для установки активной кнопки, смены изображений И ВЫСОТЫ (без изменений)
-    private void setActiveButton(boolean selectToday) {
-        int heightActivePx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 28, getResources().getDisplayMetrics());
-        int heightInactivePx = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 35, getResources().getDisplayMetrics());
+    // ----------------- Настройка кнопок фильтров и сортировки -----------------
+    private void setupFilterButtons() {
+        btnJaner = findViewById(R.id.btnJaner);
+        btnClassic = findViewById(R.id.imageView5);
+        btnKids = findViewById(R.id.imageView6);
+        btnDetective = findViewById(R.id.imageView7);
 
-        if (selectToday) {
-            btnToDay.setImageResource(R.drawable.activetoday);
-            ViewGroup.LayoutParams paramsToday = btnToDay.getLayoutParams();
-            paramsToday.height = heightActivePx;
-            btnToDay.setLayoutParams(paramsToday);
+        btnFilterNew = findViewById(R.id.imageView9);
+        btnFilterAlphabet = findViewById(R.id.imageView10);
 
-            btnAWeek.setImageResource(R.drawable.btnaweek);
-            ViewGroup.LayoutParams paramsAWeek = btnAWeek.getLayoutParams();
-            paramsAWeek.height = heightInactivePx;
-            btnAWeek.setLayoutParams(paramsAWeek);
+        // ----------------- Жанры -----------------
+        btnJaner.setOnClickListener(v -> {
+            currentGenreFilter = null;
+            applyFilters();
+            updateButtonUI();
+        });
 
-            isTodayActive = true;
-        } else {
-            btnToDay.setImageResource(R.drawable.btntoday);
-            ViewGroup.LayoutParams paramsToday = btnToDay.getLayoutParams();
-            paramsToday.height = heightInactivePx;
-            btnToDay.setLayoutParams(paramsToday);
+        btnClassic.setOnClickListener(v -> {
+            currentGenreFilter = "Классика";
+            applyFilters();
+            updateButtonUI();
+        });
 
-            btnAWeek.setImageResource(R.drawable.activeaweek);
-            ViewGroup.LayoutParams paramsAWeek = btnAWeek.getLayoutParams();
-            paramsAWeek.height = heightActivePx;
-            btnAWeek.setLayoutParams(paramsAWeek);
+        btnKids.setOnClickListener(v -> {
+            currentGenreFilter = "Детям";
+            applyFilters();
+            updateButtonUI();
+        });
 
-            isTodayActive = false;
+        btnDetective.setOnClickListener(v -> {
+            currentGenreFilter = "Детектив";
+            applyFilters();
+            updateButtonUI();
+        });
+
+        // ----------------- Сортировка -----------------
+        btnFilterNew.setOnClickListener(v -> {
+            currentSortMode = "date";
+            applyFilters();
+            updateButtonUI();
+        });
+
+        btnFilterAlphabet.setOnClickListener(v -> {
+            currentSortMode = "alpha";
+            applyFilters();
+            updateButtonUI();
+        });
+    }
+
+    // ----------------- Обновление UI кнопок -----------------
+    private void updateButtonUI() {
+        // Жанры
+        btnJaner.setImageResource(currentGenreFilter == null ? resBtnAllActive : resBtnAllInactive);
+        btnClassic.setImageResource("Классика".equals(currentGenreFilter) ? resBtnClassicActive : resBtnClassicInactive);
+        btnKids.setImageResource("Детям".equals(currentGenreFilter) ? resBtnKidsActive : resBtnKidsInactive);
+        btnDetective.setImageResource("Детектив".equals(currentGenreFilter) ? resBtnDetectiveActive : resBtnDetectiveInactive);
+
+        // Сортировка
+        btnFilterNew.setImageResource("date".equals(currentSortMode) ? resSortDateActive : resSortDateInactive);
+        btnFilterAlphabet.setImageResource("alpha".equals(currentSortMode) ? resSortAlphaActive : resSortAlphaInactive);
+    }
+
+    // ----------------- Применение фильтров -----------------
+    private void applyFilters() {
+        if (favoritesAdapter != null) {
+            favoritesAdapter.applyFilters(currentGenreFilter, currentSortMode);
         }
+    }
+
+    // ----------------- Загрузка избранного из Firebase -----------------
+    private void loadFavoriteBooks() {
+        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId == null) return;
+
+        FirebaseFirestore.getInstance()
+                .collection("favorites")
+                .document(userId)
+                .get()
+                .addOnSuccessListener(document -> {
+                    if (document.exists() && document.getData() != null) {
+
+                        Set<String> favSet = document.getData().keySet();
+
+                        List<Integer> favoriteIds = new ArrayList<>();
+                        for (String idStr : favSet) {
+                            try {
+                                favoriteIds.add(Integer.parseInt(idStr));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                        }
+
+                        List<Book> favoriteBooks = dbHelper.getBooksByIds(favoriteIds);
+
+                        if (favoritesAdapter == null) {
+                            favoritesAdapter = new FavoritesAdapter(favoriteBooks, this);
+                            recyclerViewFavorites.setAdapter(favoritesAdapter);
+                        } else {
+                            favoritesAdapter.updateData(favoriteBooks);
+                        }
+
+                        // 🔥 Сразу применяем фильтры и обновляем UI кнопок
+                        applyFilters();
+                        updateButtonUI();
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("entryPage", "Ошибка Firebase", e));
+    }
+
+    // ----------------- Нижняя навигация -----------------
+    private void setupNavigation() {
+        ImageView btnSleep = findViewById(R.id.btnSleep);
+        ImageView btnProfile = findViewById(R.id.btnProfile);
+
+        btnSleep.setOnClickListener(v ->
+                startActivity(new Intent(entryPage.this, Books.class)));
+
+        btnProfile.setOnClickListener(v ->
+                startActivity(new Intent(entryPage.this, Profile.class)));
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadFavoriteBooks();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (dbHelper != null) dbHelper.close();
     }
 }

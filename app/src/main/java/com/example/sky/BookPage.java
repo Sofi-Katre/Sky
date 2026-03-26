@@ -195,7 +195,7 @@ public class BookPage extends AppCompatActivity
         int chapterNumber = 1;
         while (cursor.moveToNext()) {
             String fileId = cursor.getString(cursor.getColumnIndexOrThrow("sequenceOrder"));
-            list.add(new Chapter("Глава " + chapterNumber, "Загрузка...", convertGoogleDriveUrlToDirect(fileId)));
+            list.add(new Chapter("Глава " + chapterNumber, "0:00", convertGoogleDriveUrlToDirect(fileId)));
             chapterNumber++;
         }
         cursor.close();
@@ -291,6 +291,6 @@ public class BookPage extends AppCompatActivity
     }
 
     private String convertGoogleDriveUrlToDirect(String id) {
-        return "https://drive.google.com" + id;
+        return "https://drive.google.com/uc?export=download&id=" + id;
     }
 }

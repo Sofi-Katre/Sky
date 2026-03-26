@@ -1,11 +1,14 @@
 package com.example.sky;
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DatabaseHelper extends SQLiteOpenHelper {
 
@@ -65,6 +68,45 @@ public class DatabaseHelper extends SQLiteOpenHelper {
             }
         }
         return mDatabase;
+    }
+
+    // Получаем книги по списку ID
+    public List<Book> getBooksByIds(List<Integer> ids) {
+        List<Book> books = new ArrayList<>();
+        if (ids == null || ids.isEmpty()) return books;
+
+        SQLiteDatabase db = getDatabase();
+        if (db == null || !db.isOpen()) return books;
+
+        // Формируем IN (?, ?, ...) для selection
+        StringBuilder inClause = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            inClause.append("?");
+            if (i < ids.size() - 1) inClause.append(",");
+        }
+
+        String selection = "bookId IN (" + inClause.toString() + ")";
+        String[] selectionArgs = new String[ids.size()];
+        for (int i = 0; i < ids.size(); i++) {
+            selectionArgs[i] = String.valueOf(ids.get(i));
+        }
+
+        Cursor cursor = db.query("Book", null, selection, selectionArgs, null, null, null);
+
+        while (cursor.moveToNext()) {
+            int id = cursor.getInt(cursor.getColumnIndexOrThrow("bookId"));
+            String title = cursor.getString(cursor.getColumnIndexOrThrow("book_name"));
+            String author = cursor.getString(cursor.getColumnIndexOrThrow("autore"));
+            String genre = cursor.getString(cursor.getColumnIndexOrThrow("book_genre"));
+            String date = cursor.getString(cursor.getColumnIndexOrThrow("book_date"));
+            String imageUrl = cursor.getString(cursor.getColumnIndexOrThrow("book_image_url"));
+
+            Book book = new Book(id, title, author, genre, date, imageUrl);
+            books.add(book);
+        }
+        cursor.close();
+
+        return books;
     }
 
     // Проверяем, был ли файл уже скачан.

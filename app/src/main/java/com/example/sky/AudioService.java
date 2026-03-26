@@ -51,16 +51,6 @@ public class AudioService extends Service {
 
     // Адаптер для текста в уведомлении (Название книги/главы)
     private class DescriptionAdapter implements PlayerNotificationManager.MediaDescriptionAdapter {
-        @Override
-        public CharSequence getCurrentContentTitle(Player player) {
-            return "Слушаем Sky..."; // Сюда потом передадим название книги
-        }
-
-        @Nullable
-        @Override
-        public PendingIntent createCurrentContentIntent(Player player) {
-            return null; // Клик по уведомлению вернет в приложение
-        }
 
         @Nullable
         @Override
@@ -72,6 +62,23 @@ public class AudioService extends Service {
         @Override
         public Bitmap getCurrentLargeIcon(Player player, PlayerNotificationManager.BitmapCallback callback) {
             return null; // Здесь будет обложка книги
+        }
+
+        @Nullable
+        @Override
+        public PendingIntent createCurrentContentIntent(Player player) {
+            // Теперь при клике на уведомление откроется экран плеера (Music.class)
+            Intent intent = new Intent(AudioService.this, Music.class);
+            return PendingIntent.getActivity(
+                    AudioService.this, 0, intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+        }
+
+        @Override
+        public CharSequence getCurrentContentTitle(Player player) {
+            // Если в плеер переданы MediaMetadata, заголовок подтянется сам
+            return player.getMediaMetadata().title != null ? player.getMediaMetadata().title : "Sky Audio";
         }
     }
 

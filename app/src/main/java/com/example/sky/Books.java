@@ -1,5 +1,6 @@
 package com.example.sky;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.SQLException;
@@ -8,29 +9,40 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 
 public class Books extends AppCompatActivity implements BooksAdapter.OnBookClickListener {
 
     private static final String TAG = "BooksActivity";
+
     private RecyclerView recyclerView;
     private BooksAdapter adapter;
     private DatabaseHelper dbHelper;
 
     private ImageView btnJaner, btnClassic, btnKids, btnDetective;
-    // НОВЫЕ ПЕРЕМЕННЫЕ ДЛЯ КНОПОК СОРТИРОВКИ
     private ImageView btnFilterNew, btnFilterAlphabet;
 
-    // Переменная для хранения текущего режима сортировки ("date" или "alpha")
-    private String currentSortMode = "date"; // Изначально сортируем по дате (новизне)
-    // Переменная для хранения текущего активного жанра (изначально null - все жанры)
-    private String currentGenreFilter = null;
+    private String currentSortMode = "date"; // "date" или "alpha"
+    private String currentGenreFilter = null; // null = все жанры
 
+    private Set<String> favoriteIds = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,73 +51,14 @@ public class Books extends AppCompatActivity implements BooksAdapter.OnBookClick
 
         dbHelper = new DatabaseHelper(this);
 
-        // 1. Инициализируем кнопки фильтров и устанавливаем слушатели
         setupFilterButtons();
-
-        // 2. Инициализируем кнопки сортировки и устанавливаем слушатели
         setupSortButtons();
-
-        // 3. Инициализируем UI (RecyclerView) и загружаем книги
         initializeUIAndLoadBooks();
-
-        // 4. Инициализируем нижние навигационные кнопки
         setupNavigationButtons();
+        loadFavoritesFromFirebase();
     }
 
-    private void setupNavigationButtons() {
-        //ImageView btnMusic = findViewById(R.id.btnMusic);
-        ImageView btnWhether = findViewById(R.id.btnWhether);
-        ImageView btnProfile = findViewById(R.id.btnProfile);
-
-        //... (слушатели навигации)
-        btnWhether.setOnClickListener(v -> {
-            Intent intent = new Intent(Books.this, entryPage.class);
-            startActivity(intent);
-        });
-        btnProfile.setOnClickListener(v -> {
-            Intent intent = new Intent(Books.this, Profile.class);
-            startActivity(intent);
-        });
-    }
-
-    // НОВЫЙ МЕТОД: Инициализация кнопок сортировки и установка слушателей
-    private void setupSortButtons() {
-        btnFilterNew = findViewById(R.id.btnFilterNew);
-        btnFilterAlphabet = findViewById(R.id.btnFilterAlphabet);
-
-        btnFilterNew.setOnClickListener(v -> {
-            currentSortMode = "date"; // Сортировка по дате (новизне)
-            updateSortUI(currentSortMode);
-            loadBooksByGenre(); // Перезагружаем список с новым режимом сортировки
-        });
-
-        btnFilterAlphabet.setOnClickListener(v -> {
-            currentSortMode = "alpha"; // Сортировка по алфавиту
-            updateSortUI(currentSortMode);
-            loadBooksByGenre(); // Перезагружаем список с новым режимом сортировки
-        });
-
-        // Устанавливаем начальное состояние UI сортировки (по умолчанию активна кнопка "Новые")
-        updateSortUI(currentSortMode);
-    }
-
-    // НОВЫЙ МЕТОД: Обновление внешнего вида кнопок сортировки
-    private void updateSortUI(String sortMode) {
-        if ("date".equals(sortMode)) {
-            // Активна кнопка "Новые", неактивна "Алфавит"
-            btnFilterNew.setImageResource(R.drawable.filtertonew); // Активное изображение для "Новые"
-            btnFilterAlphabet.setImageResource(R.drawable.filtertoalfavitoff); // Неактивное изображение для "Алфавит"
-        } else if ("alpha".equals(sortMode)) {
-            // Активна кнопка "Алфавит", неактивна "Новые"
-            btnFilterNew.setImageResource(R.drawable.filtertonewoff); // Неактивное изображение для "Новые" (Вам нужно добавить этот ресурс!)
-            btnFilterAlphabet.setImageResource(R.drawable.filtertoalfavit); // Активное изображение для "Алфавит"
-        }
-    }
-
-
-    /**
-     * Инициализация кнопок фильтрации и установка слушателей кликов
-     */
+    /** ------------------- Фильтры по жанрам ------------------- */
     private void setupFilterButtons() {
         btnJaner = findViewById(R.id.btnJaner);
         btnClassic = findViewById(R.id.btnClassic);
@@ -114,70 +67,73 @@ public class Books extends AppCompatActivity implements BooksAdapter.OnBookClick
 
         btnJaner.setOnClickListener(v -> {
             updateGenreUI("All");
-            currentGenreFilter = null; // null означает загрузить все жанры
-            loadBooksByGenre(); // Вызываем метод без параметров
+            currentGenreFilter = null;
+            loadBooksByGenre();
         });
-
         btnClassic.setOnClickListener(v -> {
             updateGenreUI("Classic");
-            currentGenreFilter = "Классика"; // Передаем точное русское название из БД
-            loadBooksByGenre(); // Вызываем метод без параметров
+            currentGenreFilter = "Классика";
+            loadBooksByGenre();
         });
-
         btnKids.setOnClickListener(v -> {
             updateGenreUI("Kids");
-            currentGenreFilter = "Детям"; // Передаем точное русское название из БД
-            loadBooksByGenre(); // Вызываем метод без параметров
+            currentGenreFilter = "Детям";
+            loadBooksByGenre();
         });
-
         btnDetective.setOnClickListener(v -> {
             updateGenreUI("Detective");
-            currentGenreFilter = "Детектив"; // Передаем точное русское название из БД
-            loadBooksByGenre(); // Вызываем метод без параметров
+            currentGenreFilter = "Детектив";
+            loadBooksByGenre();
         });
 
-        // Устанавливаем начальное состояние UI (кнопка "Все" активна)
         updateGenreUI("All");
     }
 
-    /**
-     * Обновляет внешний вид кнопок жанров (подсветка активной кнопки)
-     */
     private void updateGenreUI(String selectedGenre) {
-        // Сброс всех кнопок в неактивное состояние
-        btnJaner.setImageResource(R.drawable.btnalloff); // Используем неактивный ресурс btnAlloff
+        btnJaner.setImageResource(R.drawable.btnalloff);
         btnClassic.setImageResource(R.drawable.btnclassicblack);
         btnKids.setImageResource(R.drawable.btnkidsblack);
         btnDetective.setImageResource(R.drawable.btndetectiveblack);
 
-        // Установка активного состояния (цветные иконки) для выбранного жанра
         switch (selectedGenre) {
-            case "All":
-                btnJaner.setImageResource(R.drawable.btnall);
-                break;
-            case "Classic":
-                btnClassic.setImageResource(R.drawable.btnclassic);
-                break;
-            case "Kids":
-                btnKids.setImageResource(R.drawable.btnkids);
-                break;
-            case "Detective":
-                btnDetective.setImageResource(R.drawable.btndetective);
-                break;
+            case "All": btnJaner.setImageResource(R.drawable.btnall); break;
+            case "Classic": btnClassic.setImageResource(R.drawable.btnclassic); break;
+            case "Kids": btnKids.setImageResource(R.drawable.btnkids); break;
+            case "Detective": btnDetective.setImageResource(R.drawable.btndetective); break;
         }
     }
 
-    /**
-     * Вызывается кнопками фильтрации/сортировки для загрузки нужных книг
-     */
-    private void loadBooksByGenre() {
-        // Используем унифицированный метод loadBooksFromDB, который использует глобальные переменные
-        List<Book> filteredList = loadBooksFromDB();
-        if (adapter != null) {
-            adapter.updateList(filteredList);
+    /** ------------------- Сортировка ------------------- */
+    private void setupSortButtons() {
+        btnFilterNew = findViewById(R.id.btnFilterNew);
+        btnFilterAlphabet = findViewById(R.id.btnFilterAlphabet);
+
+        btnFilterNew.setOnClickListener(v -> {
+            currentSortMode = "date";
+            updateSortUI();
+            loadBooksByGenre();
+        });
+
+        btnFilterAlphabet.setOnClickListener(v -> {
+            currentSortMode = "alpha";
+            updateSortUI();
+            loadBooksByGenre();
+        });
+
+        updateSortUI();
+    }
+
+    private void updateSortUI() {
+        if ("date".equals(currentSortMode)) {
+            btnFilterNew.setImageResource(R.drawable.filtertonew);
+            btnFilterAlphabet.setImageResource(R.drawable.filtertoalfavitoff);
+        } else {
+            btnFilterNew.setImageResource(R.drawable.filtertonewoff);
+            btnFilterAlphabet.setImageResource(R.drawable.filtertoalfavit);
         }
     }
 
+    /** ------------------- RecyclerView и загрузка книг ------------------- */
     private void initializeUIAndLoadBooks() {
         try {
             if (dbHelper.getDatabase() == null || !dbHelper.getDatabase().isOpen()) {
@@ -185,56 +141,64 @@ public class Books extends AppCompatActivity implements BooksAdapter.OnBookClick
             }
 
             recyclerView = findViewById(R.id.recyclerViewBooks);
-            if (recyclerView == null) {
-                Log.e(TAG, "recyclerViewBooks not found in the layout!");
-                return;
-            }
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
-            // Загружаем все книги при старте с сортировкой по умолчанию ("date")
-            List<Book> books = loadBooksFromDB();
-
-            adapter = new BooksAdapter(this, books, this);
+            adapter = new BooksAdapter(this, loadBooksFromDB(), this);
             recyclerView.setAdapter(adapter);
 
         } catch (SQLException e) {
-            Log.e(TAG, "Error opening database or loading books", e);
-            Toast.makeText(this, "Не удалось открыть базу данных. Убедитесь, что она была загружена.", Toast.LENGTH_LONG).show();
+            Log.e(TAG, "Ошибка при открытии БД", e);
+            Toast.makeText(this, "Не удалось открыть базу данных.", Toast.LENGTH_LONG).show();
         }
     }
 
-    /**
-     * Унифицированный метод загрузки книг из БД с фильтром И СОРТИРОВКОЙ
-     */
+    private void loadBooksByGenre() {
+        if (adapter != null) {
+            adapter.updateList(loadBooksFromDB());
+        }
+    }
+
+    private void loadFavoritesFromFirebase() {
+        String userId = FirebaseAuth.getInstance().getUid();
+        if (userId == null) return;
+
+        FirebaseFirestore.getInstance().collection("favorites").document(userId)
+                .addSnapshotListener((documentSnapshot, e) -> {
+                    if (e != null) {
+                        Log.w(TAG, "Listen failed.", e);
+                        return;
+                    }
+
+                    if (documentSnapshot != null && documentSnapshot.exists()) {
+                        // Обновляем наш список ID избранных книг
+                        favoriteIds = documentSnapshot.getData().keySet();
+
+                        // Перезагружаем список из локальной БД, чтобы обновить статусы isFavorite
+                        List<Book> updatedList = loadBooksFromDB();
+                        if (adapter != null) {
+                            adapter.updateList(updatedList);
+                        }
+                    }
+                });
+    }
+
+    /** ------------------- Загрузка книг из БД ------------------- */
     private List<Book> loadBooksFromDB() {
         List<Book> list = new ArrayList<>();
         SQLiteDatabase db = dbHelper.getDatabase();
-
-        if (db == null || !db.isOpen()) {
-            Log.e(TAG, "Database is not open when trying to fetch data.");
-            return list;
-        }
+        if (db == null || !db.isOpen()) return list;
 
         Cursor cursor = null;
         try {
             String selection = null;
             String[] selectionArgs = null;
 
-            // Определяем фильтр по текущему состоянию currentGenreFilter
             if (currentGenreFilter != null) {
                 selection = "book_genre = ?";
                 selectionArgs = new String[]{currentGenreFilter};
             }
 
-            // Определяем режим сортировки ORDER BY по текущему состоянию currentSortMode
-            String orderBy = null;
-            if ("date".equals(currentSortMode)) {
-                // Сортировка по дате добавления (предполагаем, что bookId растет с добавлением)
-                orderBy = "bookId DESC";
-            } else if ("alpha".equals(currentSortMode)) {
-                // Сортировка по названию книги в алфавитном порядке
-                orderBy = "book_name COLLATE LOCALIZED ASC"; // Используем COLLATE LOCALIZED для русского алфавита
-            }
+            String orderBy = "date".equals(currentSortMode) ? "bookId DESC" : "book_name COLLATE LOCALIZED ASC";
 
             cursor = db.query("Book", null, selection, selectionArgs, null, null, orderBy);
 
@@ -247,19 +211,20 @@ public class Books extends AppCompatActivity implements BooksAdapter.OnBookClick
                 String imageUrl = cursor.getString(cursor.getColumnIndexOrThrow("book_image_url"));
 
                 Book book = new Book(id, title, author, genre, date, imageUrl);
+                book.setFavorite(favoriteIds.contains(String.valueOf(id)));
                 list.add(book);
             }
+
         } catch (Exception e) {
-            Log.e(TAG, "Error while reading book data from cursor", e);
+            Log.e(TAG, "Ошибка при чтении данных из БД", e);
         } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
+            if (cursor != null) cursor.close();
         }
+
         return list;
     }
 
-    // Обработка клика по элементу списка (карточке книги)
+    /** ------------------- Клик по книге ------------------- */
     @Override
     public void onBookClick(Book book) {
         Intent intent = new Intent(this, BookPage.class);
@@ -268,10 +233,50 @@ public class Books extends AppCompatActivity implements BooksAdapter.OnBookClick
     }
 
     @Override
+    public void onFavoriteClick(Book book) {
+        toggleFavorite(book); // Вызываем твой метод Firebase, который мы уже обсудили
+    }
+
+    /** ------------------- Кнопка избранного (Firebase) ------------------- */
+    public void toggleFavorite(Book book) {
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        DocumentReference favRef = db.collection("favorites").document(userId);
+
+        // 1. СРАЗУ меняем состояние в объекте и обновляем экран (мгновенный отклик)
+        boolean newState = !book.isFavorite();
+        book.setFavorite(newState);
+        adapter.notifyDataSetChanged();
+
+        // 2. В фоне отправляем запрос в Firebase
+        Map<String, Object> update = new HashMap<>();
+        if (newState) {
+            update.put(String.valueOf(book.bookId), true);
+        } else {
+            update.put(String.valueOf(book.bookId), FieldValue.delete());
+        }
+
+        favRef.set(update, SetOptions.merge())
+                .addOnFailureListener(e -> {
+                    // Если вдруг ошибка интернета — возвращаем иконку назад
+                    book.setFavorite(!newState);
+                    adapter.notifyDataSetChanged();
+                    Toast.makeText(this, "Ошибка сохранения!", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    /** ------------------- Нижняя навигация ------------------- */
+    private void setupNavigationButtons() {
+        ImageView btnWhether = findViewById(R.id.btnWhether);
+        ImageView btnProfile = findViewById(R.id.btnProfile);
+
+        btnWhether.setOnClickListener(v -> startActivity(new Intent(Books.this, entryPage.class)));
+        btnProfile.setOnClickListener(v -> startActivity(new Intent(Books.this, Profile.class)));
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (dbHelper != null) {
-            dbHelper.close();
-        }
+        if (dbHelper != null) dbHelper.close();
     }
 }

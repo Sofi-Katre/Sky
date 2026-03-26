@@ -55,7 +55,7 @@
                     android:layout_height="24dp"
                     android:layout_marginStart="8dp"
                     android:contentDescription="Описание иконки"
-                    android:src="@drawable/zakladkaon" />
+                    android:src="@drawable/zakladkaoff" />
 
             </LinearLayout>
 
